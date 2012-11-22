@@ -1,0 +1,73 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% Trage hier deinen Namen und deine Matrikelnummer ein 
+\def\Module{Principles of Computer System Design}
+\def\Uebung{Assignent 1}
+\def\Studentenname{Marcus Voss (qcz284), R. Schmidtke (rxt809), Marco Eilers (dbk726)}
+\def\Sub_date{24.09.2012}
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Definition der Klasse des Dokumentes
+\documentclass[12pt,a4paper]{article}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Standardpakete fr deutsche Sprache
+%\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% volle Seite nutzen
+\usepackage{fullpage} 
+\headsep1cm
+\parindent0cm
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% einige Pakete fr Mathematische Darstellung
+\usepackage{amssymb, amstext, amsmath}
+\usepackage{fancyhdr}
+% ein Paket fr die Zhlung von Seiten
+%\usepackage{count1to}
+\usepackage{lastpage} %overwritten by vossm
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom Packages by vossm
+%Toprule
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{subfigure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ein paar Befehle, als Hilfe
+\newcommand{\fett}[1]{\textbf{#1}}
+\newcommand{\kursiv}[1]{\textit{#1}}
+\newcommand{\unterstrichen}[1]{\underline{#1}}
+\newcommand{\vereinigung}{\cup}
+\newcommand{\schnitt}{\cap}
+\newcommand{\logischund}{\wedge}
+\newcommand{\logischoder}{\vee}
+\newcommand{\natuerlichezahlen}{\mathbb{N}}
+\newcommand{\binaerezahlen}{\mathbb{B}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Kopfzeile und Fuzeile einstellen
+\lhead{\fett{\Module}}
+\rhead{\Uebung (Submission: \Sub_date)}
+
+%\lfoot{\Studentenname\:(\Matrikel)}
+\lfoot{\Studentenname}
+\rfoot{\thepage\ of \pageref{LastPage}}
+\pagestyle{fancy}
+\renewcommand{\footrulewidth}{0.4pt}
+
+%Line spacing between paragraphs
+\setlength{\parskip}{6pt}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+\section*{Blubb1} 
+\label{sec:blubb1}
+
+Kaniner!
+
+
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
