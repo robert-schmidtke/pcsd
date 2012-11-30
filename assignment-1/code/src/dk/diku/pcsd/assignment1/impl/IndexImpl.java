@@ -1,12 +1,14 @@
 package dk.diku.pcsd.assignment1.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
@@ -15,6 +17,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Index;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
 public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
+	
+	private static IndexImpl instance;
 
 	private StoreImpl store;
 
@@ -31,6 +35,13 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	private IndexImpl() {
 		this.store = StoreImpl.getInstance();
+	}
+	
+	public static IndexImpl getInstance(){
+		if (instance==null){
+			instance = new IndexImpl();
+		}
+		return instance;
 	}
 
 	/*
@@ -216,11 +227,35 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	}
 
-	@Override
+	/*
+	 * Returns the values for all keys that are in the specified range.
+	 * The returned list ist NOT sorted.
+	 * Throws an exception if begin > end
+	 * (non-Javadoc)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#scan(dk.diku.pcsd.keyvaluebase.interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Key)
+	 */
 	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+		if (begin.compareTo(end) > 0)
+			throw new BeginGreaterThanEndException(begin, end);
+		
+		Set<KeyImpl> keys = mappings.keySet();
+		
+		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
+		
+		// TODO: it may be more efficient to sort the list first
+		// and only check for one property in each iteration
+		for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext(); ){
+			KeyImpl current = i.next();
+			if (begin.compareTo(current) <= 0 && end.compareTo(current) >= 0){
+				try {
+					result.add(get(current));
+				} catch (KeyNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
