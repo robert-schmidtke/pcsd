@@ -1,5 +1,6 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -8,34 +9,39 @@ import dk.diku.pcsd.keyvaluebase.interfaces.ValueList;
 @SuppressWarnings("serial")
 public class ValueListImpl implements ValueList<ValueImpl>{
 	
+	private List<ValueImpl> valueList = new ArrayList<ValueImpl>();
+	
+	public List<ValueImpl> getValueList() {
+		return valueList;
+	}
+	
+	public void setValueList(List<ValueImpl> valueList) {
+		this.valueList = valueList;
+	}
+	
 	@Override
 	public void add(ValueImpl v) {
-		// TODO Auto-generated method stub
-		
+		valueList.add(v);
 	}
 
 	@Override
 	public void remove(ValueImpl v) {
-		// TODO Auto-generated method stub
-		
+		valueList.remove(v);
 	}
 
 	@Override
 	public void merge(ValueList<ValueImpl> v) {
-		// TODO Auto-generated method stub
-		
+		// TODO your mom!
 	}
 
 	@Override
 	public List<ValueImpl> toList() {
-		// TODO Auto-generated method stub
-		return null;
+		return getValueList();
 	}
 	
 	@Override
 	public Iterator<ValueImpl> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return valueList.iterator();
 	}
 
 }

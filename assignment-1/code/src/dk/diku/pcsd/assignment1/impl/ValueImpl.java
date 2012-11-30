@@ -5,18 +5,26 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Value;
 @SuppressWarnings("serial")
 public class ValueImpl implements Value
 {
-	Object v;
-
-	public String toString() {
-		return v.toString();
+	private Object v;
+	
+	public ValueImpl() {
+		
 	}
 	
 	public ValueImpl(Object o){
 		this.v=o;
 	}
+
+	public String toString() {
+		return v.toString();
+	}
 	
 	public Object getValue(){
 		return v;
+	}
+	
+	public void setValue(Object v) {
+		this.v = v;
 	}
 }
 
