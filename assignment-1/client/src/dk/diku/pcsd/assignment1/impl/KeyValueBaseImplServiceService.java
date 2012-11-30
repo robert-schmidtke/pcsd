@@ -30,9 +30,9 @@ public class KeyValueBaseImplServiceService
         try {
             URL baseUrl;
             baseUrl = dk.diku.pcsd.assignment1.impl.KeyValueBaseImplServiceService.class.getResource(".");
-            url = new URL(baseUrl, "http://localhost:8080/pcsd-assignment1/keyvaluebase?wsdl");
+            url = new URL(baseUrl, "http://localhost:8080/code/keyvaluebase?wsdl");
         } catch (MalformedURLException e) {
-            logger.warning("Failed to create URL for the wsdl Location: 'http://localhost:8080/pcsd-assignment1/keyvaluebase?wsdl', retrying as a local file");
+            logger.warning("Failed to create URL for the wsdl Location: 'http://localhost:8080/code/keyvaluebase?wsdl', retrying as a local file");
             logger.warning(e.getMessage());
         }
         KEYVALUEBASEIMPLSERVICESERVICE_WSDL_LOCATION = url;

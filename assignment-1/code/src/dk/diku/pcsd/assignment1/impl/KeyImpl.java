@@ -1,5 +1,7 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import org.eclipse.jdt.internal.compiler.ast.ThisReference;
+
 import dk.diku.pcsd.keyvaluebase.interfaces.Key;
 
 @SuppressWarnings("rawtypes")
@@ -30,6 +32,22 @@ public class KeyImpl implements Key<KeyImpl>
 	
 	public void setKey(String key){
 		this.key = key;
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if (o instanceof KeyImpl){
+			KeyImpl k =(KeyImpl) o;
+			return key.equals(k.getKey());
+		}else{
+			return false;
+		}
+	}
+	
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return key.hashCode();
 	}
 
 }
