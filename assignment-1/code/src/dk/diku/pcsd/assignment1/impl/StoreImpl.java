@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedFile;
 import dk.diku.pcsd.keyvaluebase.interfaces.Store;
@@ -16,7 +14,8 @@ public class StoreImpl implements Store
 	private static StoreImpl instance = null;
 	
 	private final PrintWriter logFileWriter;
-		
+	
+	private final long MMF_SIZE = 1024 * 1024;
 	private final MemoryMappedFile mmf;
 	private final RandomAccessFile mmfBase;
 		
@@ -28,7 +27,7 @@ public class StoreImpl implements Store
 	
 	private StoreImpl() {
 		try {
-			logFileWriter = new PrintWriter("store-" + new SimpleDateFormat("yyyy-MM-DD_HH-mm-ss-SSS").format(new Date()) + ".log");
+			logFileWriter = new PrintWriter("store.log");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Error creating log file for StoreImpl");
@@ -36,12 +35,11 @@ public class StoreImpl implements Store
 		
 		try {
 			mmfBase = new RandomAccessFile("store.mmf", "rw");
-			mmf = new MemoryMappedFile(
-					mmfBase.getChannel(),
-					FileChannel.MapMode.READ_WRITE,
-					0, 24 * 1073741824); // 24GB
+			mmfBase.setLength(MMF_SIZE);
+			mmf = new MemoryMappedFile(mmfBase.getChannel(), FileChannel.MapMode.READ_WRITE, 0, MMF_SIZE);
 		} catch (Exception e) {
 			e.printStackTrace(logFileWriter);
+			logFileWriter.flush();
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
@@ -54,6 +52,7 @@ public class StoreImpl implements Store
 			return dst;
 		} catch(Exception e) {
 			e.printStackTrace(logFileWriter);
+			logFileWriter.flush();
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
@@ -64,7 +63,8 @@ public class StoreImpl implements Store
 			mmf.put(value, position);
 		} catch(Exception e) {
 			e.printStackTrace(logFileWriter);
-			throw new RuntimeException(e.getMessage(), e);
+			logFileWriter.flush();
+			throw new RuntimeException("Position: " + position + ", Length: " + value.length + ", " + e.getMessage(), e);
 		}
 	}
 	

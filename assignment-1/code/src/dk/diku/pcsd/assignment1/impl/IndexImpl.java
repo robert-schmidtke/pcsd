@@ -169,6 +169,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public ValueListImpl get(KeyImpl k) throws KeyNotFoundException,
 			IOException {
+		System.out.println(mappings);
 		SpaceIdent s = mappings.get(k);
 
 		if (s == null) {
