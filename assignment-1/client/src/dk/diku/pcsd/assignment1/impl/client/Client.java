@@ -26,9 +26,26 @@ public class Client {
 			ValueListImpl valueList = new ValueListImpl();
 			valueList.getValueList().add(value);
 			
-			kvbis.insert(new KeyImpl(), valueList);
+			KeyImpl key2 = new KeyImpl();
+			key2.setKey("moinkey3");
 			
-			System.out.println(kvbis.read(key));
+			ValueImpl value2 = new ValueImpl();
+			value2.setValue("moinvalue2");
+			
+			ValueListImpl valueList2 = new ValueListImpl();
+			valueList2.getValueList().add(value2);
+			
+			kvbis.insert(key2, valueList);
+			//kvbis.insert(key, valueList2);
+			//kvbis.delete(key2);
+			kvbis.update(key2, valueList2);
+			
+			
+			
+			
+			System.out.println("Tralala " + kvbis.read(key).getValueList().get(0).getValue());
+			//System.out.println("Tralalu " + kvbis.read(key2).getValueList().get(0).getValue());
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
