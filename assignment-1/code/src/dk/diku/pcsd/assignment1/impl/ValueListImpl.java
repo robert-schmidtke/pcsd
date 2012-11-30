@@ -31,7 +31,7 @@ public class ValueListImpl implements ValueList<ValueImpl>{
 
 	@Override
 	public void merge(ValueList<ValueImpl> v) {
-		// TODO your mom!
+		valueList.addAll(v.toList());
 	}
 
 	@Override
