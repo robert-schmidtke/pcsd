@@ -17,23 +17,31 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 {
-	IndexImpl ind; 
-	boolean initialized = false;
+	private IndexImpl index; 
+	private boolean initialized = false, initializing = false;
 
 	public KeyValueBaseImpl() {
-		ind = IndexImpl.getInstance();
+		this(IndexImpl.getInstance());
 	}
 	
-	public KeyValueBaseImpl(IndexImpl index) {
-		ind = index;
+	private KeyValueBaseImpl(IndexImpl index) {
+		this.index = index;
 	}
 
 	@Override
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
 			ServiceInitializingException, FileNotFoundException {
-		// TODO: implement
+		if(initialized)
+			throw new ServiceAlreadyInitializedException();
+		if(initializing)
+			throw new ServiceInitializingException();
+		initializing = true;
+		
+		// TODO
+		
 		initialized = true;
+		initializing = false;
 	}
 
 	@Override
@@ -41,7 +49,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			IOException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		return ind.get(k);
+		return index.get(k);
 	}
 
 	@Override
@@ -50,7 +58,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.insert(k, v);
+		index.insert(k, v);
 	}
 
 	@Override
@@ -59,7 +67,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.update(k, newV);		
+		index.update(k, newV);		
 	}
 
 	@Override
@@ -67,7 +75,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.remove(k);
+		index.remove(k);
 	}
 
 	@Override
@@ -76,7 +84,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		List<ValueListImpl> allValues = ind.scan(begin, end);
+		List<ValueListImpl> allValues = index.scan(begin, end);
 		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext(); ){
 			ValueListImpl current = i.next();
 			if (!p.evaluate(current))
