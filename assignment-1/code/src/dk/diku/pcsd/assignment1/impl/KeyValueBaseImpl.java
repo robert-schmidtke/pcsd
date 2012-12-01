@@ -1,7 +1,11 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,25 +19,86 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBase;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
-public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
-{
-	IndexImpl ind; 
-	boolean initialized = false;
+public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
+	private IndexImpl index;
+	private boolean initialized = false, initializing = false;
 
 	public KeyValueBaseImpl() {
-		ind = IndexImpl.getInstance();
+		this(IndexImpl.getInstance());
 	}
-	
-	public KeyValueBaseImpl(IndexImpl index) {
-		ind = index;
+
+	private KeyValueBaseImpl(IndexImpl index) {
+		this.index = index;
 	}
 
 	@Override
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
 			ServiceInitializingException, FileNotFoundException {
-		// TODO: implement
-		initialized = true;
+		if (initialized)
+			throw new ServiceAlreadyInitializedException();
+		if (initializing)
+			throw new ServiceInitializingException();
+		initializing = true;
+
+		FileReader fr = new FileReader(serverFilename);
+		BufferedReader br = new BufferedReader(fr);
+		
+		HashMap<KeyImpl, ValueListImpl> toInsert = new HashMap<KeyImpl, ValueListImpl>();
+
+		String current;
+		try {
+			current = br.readLine();
+			String currentKey = null;
+			ValueListImpl currentValues = null;
+			while (current != null) {
+				
+				String[] values = current.split("\\s", 2);
+				
+				if (values.length > 1) {
+					String key = values[0];
+					if (!key.equals(currentKey)) {
+
+						if (currentKey != null) {
+							toInsert.put(new KeyImpl(currentKey), currentValues);
+						}
+
+						currentKey = key;
+						currentValues = new ValueListImpl();
+					}
+
+					for (int i = 1; i < values.length; i++) {
+						currentValues.add(new ValueImpl(values[i]));
+					}
+				}
+
+				current = br.readLine();
+			}
+			
+			if (currentKey != null) {
+				toInsert.put(new KeyImpl(currentKey), currentValues);
+			}
+			
+			br.close();
+			
+			initialized = true;
+			
+			for (KeyImpl k : toInsert.keySet()){
+				try {
+					insert(k, toInsert.get(k));
+				} catch (KeyAlreadyPresentException e) {
+					// This can never happen
+					e.printStackTrace();
+				} catch (ServiceNotInitializedException e) {
+					// Neither can this
+					e.printStackTrace();
+				}
+			}
+			initializing = false;
+		} catch (IOException e) {
+			// Throw a FileNotFoundException instead.
+			throw new FileNotFoundException(e.getMessage());
+		}
 	}
 
 	@Override
@@ -41,7 +106,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			IOException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		return ind.get(k);
+		return index.get(k);
 	}
 
 	@Override
@@ -50,7 +115,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.insert(k, v);
+		index.insert(k, v);
 	}
 
 	@Override
@@ -59,7 +124,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.update(k, newV);		
+		index.update(k, newV);
 	}
 
 	@Override
@@ -67,17 +132,17 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		ind.remove(k);
+		index.remove(k);
 	}
 
 	@Override
-	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end, Predicate<ValueListImpl> p)
-			throws IOException, BeginGreaterThanEndException,
-			ServiceNotInitializedException {
+	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end,
+			Predicate<ValueListImpl> p) throws IOException,
+			BeginGreaterThanEndException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		List<ValueListImpl> allValues = ind.scan(begin, end);
-		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext(); ){
+		List<ValueListImpl> allValues = index.scan(begin, end);
+		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext();) {
 			ValueListImpl current = i.next();
 			if (!p.evaluate(current))
 				i.remove();
@@ -97,7 +162,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl,ValueListImpl>
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> mappings)
 			throws IOException, ServiceNotInitializedException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
