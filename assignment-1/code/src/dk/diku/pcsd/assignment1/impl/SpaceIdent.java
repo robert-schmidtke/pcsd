@@ -1,9 +1,11 @@
 package dk.diku.pcsd.assignment1.impl;
 
-public class SpaceIdent {
+public class SpaceIdent implements Comparable<SpaceIdent> {
 	private long pos;
-	
+
 	private int length;
+
+	private long next;
 
 	public long getPos() {
 		return pos;
@@ -12,19 +14,31 @@ public class SpaceIdent {
 	public int getLength() {
 		return length;
 	}
-	
-	
-	
-	public void setPos(long pos) {
-		this.pos = pos;
+
+	public long getNext() {
+		return next;
 	}
 
 	public void setLength(int length) {
 		this.length = length;
+		this.next = pos + length;
 	}
 
-	public SpaceIdent(long pos, int length){
-		this.pos=pos;
-		this.length=length;
+	public SpaceIdent(long pos, int length) {
+		this.pos = pos;
+		this.length = length;
+		this.next = pos + length;
+	}
+
+	@Override
+	public int compareTo(SpaceIdent other) {
+		long otherP = other.getPos();
+		if (pos < otherP)
+			return -1;
+		else if (pos == otherP)
+			return 0;
+		else
+			return 1;
+
 	}
 }
