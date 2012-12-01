@@ -19,6 +19,7 @@ public class SpaceIdent implements Comparable<SpaceIdent> {
 		return next;
 	}
 
+	@Deprecated
 	public void setLength(int length) {
 		this.length = length;
 		this.next = pos + length;
