@@ -12,16 +12,6 @@ public class SpaceIdent {
 	public int getLength() {
 		return length;
 	}
-	
-	
-	
-	public void setPos(long pos) {
-		this.pos = pos;
-	}
-
-	public void setLength(int length) {
-		this.length = length;
-	}
 
 	public SpaceIdent(long pos, int length){
 		this.pos=pos;

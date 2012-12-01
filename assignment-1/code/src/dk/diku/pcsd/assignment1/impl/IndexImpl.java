@@ -17,7 +17,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Index;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
 public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
-	
+
 	private static IndexImpl instance;
 
 	private StoreImpl store;
@@ -36,9 +36,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	private IndexImpl() {
 		this.store = StoreImpl.getInstance();
 	}
-	
-	public static IndexImpl getInstance(){
-		if (instance==null){
+
+	public synchronized static IndexImpl getInstance() {
+		if (instance == null) {
 			instance = new IndexImpl();
 		}
 		return instance;
@@ -48,23 +48,26 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 * Finds the location of an empty area in the MMF that has at least the
 	 * specified length. The first such area is returned, no matter how big it
 	 * is. If no such area is found, it returns a pointer to the end of the
-	 * currently used space.
+	 * currently used space. Removes the found space from the emptyList.
 	 */
 	private SpaceIdent findFreeSpace(int length) {
-		SpaceIdent result = null;
+		synchronized (emptyList) {
+			SpaceIdent result = null;
 
-		// Search for empty areas in the emptyList
-		for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext();) {
-			SpaceIdent current = i.next();
-			if (current.getLength() >= length) {
-				return current;
+			// Search for empty areas in the emptyList
+			for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext();) {
+				SpaceIdent current = i.next();
+				if (current.getLength() >= length) {
+					i.remove();
+					return current;
+				}
 			}
+
+			result = new SpaceIdent(fileLength, length);
+			fileLength += length;
+
+			return result;
 		}
-
-		result = new SpaceIdent(fileLength, length);
-		fileLength += length;
-
-		return result;
 	}
 
 	/*
@@ -75,33 +78,30 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 * one big free area to avoid fragmentation.
 	 */
 	private void freeSpace(SpaceIdent s) {
-		boolean done = false;
+		synchronized (emptyList) {
+			// look for adjacent areas of free space
+			for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext();) {
+				SpaceIdent current = i.next();
 
-		// look for adjacent areas of free space
-		for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext()
-				&& !done;) {
-			SpaceIdent current = i.next();
+				// look for free space right BEFORE the newly freed space
+				if (s.getPos() == (current.getPos() + current.getLength())) {
+					current = new SpaceIdent(current.getPos(),
+							current.getLength() + s.getLength());
+					s = current;
+					i.remove();
+				}
 
-			// look for free space right BEFORE the newly freed space
-			if (s.getPos() == (current.getPos() + current.getLength())) {
-				current.setLength(current.getLength() + s.getLength());
-				s = current;
-				done = true;
+				// look for free space right AFTER the newly freed space
+				if (current.getPos() == s.getPos() + s.getLength()) {
+					current = new SpaceIdent(s.getPos(), s.getLength()
+							+ current.getLength());
+					s = current;
+					i.remove();
+				}
 			}
 
-			// look for free space right AFTER the newly freed space
-			if (current.getPos() == s.getPos() + s.getLength()) {
-				current.setPos(s.getPos());
-				current.setLength(current.getLength() + s.getLength());
-				s = current;
-				done = true;
-			}
-		}
-
-		// if the newly freed space could not be joined with another free area
-		// add it to the emptyList
-		if (!done)
 			emptyList.add(s);
+		}
 	}
 
 	/*
@@ -123,9 +123,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		SpaceIdent space = findFreeSpace(toWrite.length);
 
 		store.write(space.getPos(), toWrite);
-
-		// remove used space from emptyList
-		emptyList.remove(space);
 
 		// and add new empty area to list if necessary
 		int ldiff = space.getLength() - toWrite.length;
@@ -205,7 +202,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 				// find new space
 				s = findFreeSpace(toWrite.length);
-				emptyList.remove(s);
 
 				// and store the new value there
 				store.write(s.getPos(), toWrite);
@@ -220,35 +216,37 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				if (ldiff > 0) {
 					freeSpace(new SpaceIdent(s.getPos() + toWrite.length, ldiff));
 				}
-				
+
 				// adjust the length value in the map
-				s.setLength(toWrite.length);
+				mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
 			}
 		}
 
 	}
 
 	/*
-	 * Returns the values for all keys that are in the specified range.
-	 * The returned list ist NOT sorted.
-	 * Throws an exception if begin > end
+	 * Returns the values for all keys that are in the specified range. The
+	 * returned list ist NOT sorted. Throws an exception if begin > end
 	 * (non-Javadoc)
-	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#scan(dk.diku.pcsd.keyvaluebase.interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Key)
+	 * 
+	 * @see
+	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#scan(dk.diku.pcsd.keyvaluebase
+	 * .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Key)
 	 */
 	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
 		if (begin.compareTo(end) > 0)
 			throw new BeginGreaterThanEndException(begin, end);
-		
+
 		Set<KeyImpl> keys = mappings.keySet();
-		
+
 		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
-		
+
 		// TODO: it may be more efficient to sort the list first
 		// and only check for one property in each iteration
-		for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext(); ){
+		for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
 			KeyImpl current = i.next();
-			if (begin.compareTo(current) <= 0 && end.compareTo(current) >= 0){
+			if (begin.compareTo(current) <= 0 && end.compareTo(current) >= 0) {
 				try {
 					result.add(get(current));
 				} catch (KeyNotFoundException e) {
