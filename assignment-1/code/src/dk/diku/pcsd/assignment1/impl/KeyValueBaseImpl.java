@@ -1,7 +1,6 @@
 package dk.diku.pcsd.assignment1.impl;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,6 +39,12 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		if (initializing)
 			throw new ServiceInitializingException();
 		initializing = true;
+		
+		if(serverFilename == null) {
+			initialized = true;
+			initializing = false;
+			return;
+		}
 
 		FileReader fr = new FileReader(serverFilename);
 		BufferedReader br = new BufferedReader(fr);

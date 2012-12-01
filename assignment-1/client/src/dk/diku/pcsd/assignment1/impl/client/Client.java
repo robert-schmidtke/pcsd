@@ -25,7 +25,7 @@ public class Client {
 		valueList.getValueList().add(value);
 		
 		try {
-			kvbis.init("");
+			kvbis.init(null);
 			kvbis.insert(key, valueList);
 			System.out.println(kvbis.read(key).getValueList().get(0).getValue());
 		} catch (Exception e) {
