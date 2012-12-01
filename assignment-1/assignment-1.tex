@@ -27,6 +27,8 @@
 \pagestyle{fancy}
 \renewcommand{\footrulewidth}{0.4pt}
 
+\newcommand{\code}[1]{{\fontfamily{fvm}\small \selectfont #1}}
+
 %Line spacing between paragraphs
 \setlength{\parskip}{6pt}
 
@@ -52,6 +54,7 @@
 
 \subsection*{Question 1}
 \label{sec:pq1}
+There are basically three types of semantics: 'Exactly once', 'at most once' and 'at least once'. Since all of these three types rely on the interaction of client and server, it depends mostly on the client what type of semantics is employed (as it may choose to try again and again). The service and client implementations we provide are of the type 'at most once'. If the service is unavailable at the time of the request, the request is not repeated, but an exception is raised. Similarly, exceptions are raised on other errors during execution on the server (as per the \code{KeyValueBase} interface). The clients we ship respect that and do not try again, so the overall semantics used are of type 'at most once'. Other client implementations may prefer to retry the operation on failure until it has succeeded (at least) once which can be implemented just fine by keeping track of errors from the service.
 
 \subsection*{Question 2}
 \label{sec:pq2}
