@@ -3,12 +3,15 @@ package dk.diku.pcsd.assignment1.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
@@ -27,8 +30,10 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	private int fileLength = 0;
 
 	// List of empty parts in the MMF
-	private List<SpaceIdent> emptyList = Collections
-			.synchronizedList(new LinkedList<SpaceIdent>());
+	// private List<SpaceIdent> emptyList = Collections
+	// .synchronizedList(new LinkedList<SpaceIdent>());
+	private SortedSet<SpaceIdent> emptyList = Collections
+			.synchronizedSortedSet(new TreeSet<SpaceIdent>());
 
 	// Mapping of keys to the respective parts of the MMF
 	private Map<KeyImpl, SpaceIdent> mappings = new Hashtable<KeyImpl, SpaceIdent>();
@@ -52,15 +57,29 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	private SpaceIdent findFreeSpace(int length) {
 		synchronized (emptyList) {
+			SpaceIdent previous = null;
 			SpaceIdent result = null;
 
-			// Search for empty areas in the emptyList
 			for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext();) {
 				SpaceIdent current = i.next();
-				if (current.getLength() >= length) {
+
+				if (previous != null && previous.getNext() == current.getPos()) {
 					i.remove();
-					return current;
+					previous.setLength(previous.getLength()+current.getLength());
+					current = previous;
 				}
+
+				if (current.getLength() >= length) {
+					result = current;
+					break;
+				}
+
+				previous = current;
+			}
+			
+			if (result != null){
+				emptyList.remove(result);
+				return result;
 			}
 
 			result = new SpaceIdent(fileLength, length);
@@ -79,27 +98,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	private void freeSpace(SpaceIdent s) {
 		synchronized (emptyList) {
-			// look for adjacent areas of free space
-			for (Iterator<SpaceIdent> i = emptyList.iterator(); i.hasNext();) {
-				SpaceIdent current = i.next();
-
-				// look for free space right BEFORE the newly freed space
-				if (s.getPos() == (current.getPos() + current.getLength())) {
-					current = new SpaceIdent(current.getPos(),
-							current.getLength() + s.getLength());
-					s = current;
-					i.remove();
-				}
-
-				// look for free space right AFTER the newly freed space
-				if (current.getPos() == s.getPos() + s.getLength()) {
-					current = new SpaceIdent(s.getPos(), s.getLength()
-							+ current.getLength());
-					s = current;
-					i.remove();
-				}
-			}
-
 			emptyList.add(s);
 		}
 	}
