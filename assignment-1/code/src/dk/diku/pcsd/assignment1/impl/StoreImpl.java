@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.regex.Matcher;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedFile;
 import dk.diku.pcsd.keyvaluebase.interfaces.Store;
@@ -34,7 +35,7 @@ public class StoreImpl implements Store {
 			tmpDir += File.separator;
 		
 		// versioning of the store
-		String mmfPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", File.separator) + File.separator + "store.mmf";
+		String mmfPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + File.separator + "store.mmf";
 		File mmfFile = new File(mmfPath);
 
 		try {
