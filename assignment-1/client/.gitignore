@@ -1,3 +1,5 @@
 .classpath
 .project
 bin/
+src/dk/diku/pcsd/assignment1/impl/*.java
+src/dk/diku/pcsd/assignment1/impl/*.class
