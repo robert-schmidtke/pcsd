@@ -205,6 +205,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 				// find new space
 				s = findFreeSpace(toWrite.length);
+				emptyList.remove(s);
 
 				// and store the new value there
 				store.write(s.getPos(), toWrite);
