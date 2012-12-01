@@ -34,7 +34,7 @@ public class SimpleReadTest {
 		kvbiss = new KeyValueBaseImplServiceService();
 		kvbis = kvbiss.getKeyValueBaseImplServicePort();
 		try {
-			kvbis.init("TestFile");
+			kvbis.init(null);
 		} catch (FileNotFoundException_Exception e) {
 			e.printStackTrace();
 		} catch (ServiceAlreadyInitializedException_Exception e) {
