@@ -3,10 +3,8 @@ package dk.diku.pcsd.assignment1.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +63,8 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 				if (previous != null && previous.getNext() == current.getPos()) {
 					i.remove();
-					previous.setLength(previous.getLength()+current.getLength());
+					previous.setLength(previous.getLength()
+							+ current.getLength());
 					current = previous;
 				}
 
@@ -76,8 +75,8 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 				previous = current;
 			}
-			
-			if (result != null){
+
+			if (result != null) {
 				emptyList.remove(result);
 				return result;
 			}
@@ -112,24 +111,26 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public void insert(KeyImpl k, ValueListImpl v)
 			throws KeyAlreadyPresentException, IOException {
-		if (mappings.containsKey(k)) {
-			throw new KeyAlreadyPresentException(k);
+		synchronized (k.getKey().intern()) {
+			if (mappings.containsKey(k)) {
+				throw new KeyAlreadyPresentException(k);
+			}
+
+			byte[] toWrite = vs.toByteArray(v);
+
+			SpaceIdent space = findFreeSpace(toWrite.length);
+
+			store.write(space.getPos(), toWrite);
+
+			// and add new empty area to list if necessary
+			int ldiff = space.getLength() - toWrite.length;
+
+			if (ldiff > 0)
+				emptyList.add(new SpaceIdent(space.getPos() + toWrite.length,
+						ldiff));
+
+			mappings.put(k, space);
 		}
-
-		byte[] toWrite = vs.toByteArray(v);
-
-		SpaceIdent space = findFreeSpace(toWrite.length);
-
-		store.write(space.getPos(), toWrite);
-
-		// and add new empty area to list if necessary
-		int ldiff = space.getLength() - toWrite.length;
-
-		if (ldiff > 0)
-			emptyList
-					.add(new SpaceIdent(space.getPos() + toWrite.length, ldiff));
-
-		mappings.put(k, space);
 	}
 
 	/*
@@ -141,16 +142,18 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 * .interfaces.Key)
 	 */
 	public void remove(KeyImpl k) throws KeyNotFoundException {
-		SpaceIdent s = mappings.get(k);
+		synchronized (k.getKey().intern()) {
+			SpaceIdent s = mappings.get(k);
 
-		if (s == null) {
-			throw new KeyNotFoundException(k);
-		} else {
-			// free the space
-			freeSpace(s);
+			if (s == null) {
+				throw new KeyNotFoundException(k);
+			} else {
+				// free the space
+				freeSpace(s);
 
-			// and remove the key from the mapping
-			mappings.remove(k);
+				// and remove the key from the mapping
+				mappings.remove(k);
+			}
 		}
 	}
 
@@ -164,13 +167,15 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public ValueListImpl get(KeyImpl k) throws KeyNotFoundException,
 			IOException {
-		SpaceIdent s = mappings.get(k);
+		synchronized (k.getKey().intern()) {
+			SpaceIdent s = mappings.get(k);
 
-		if (s == null) {
-			throw new KeyNotFoundException(k);
-		} else {
-			byte[] read = store.read(s.getPos(), s.getLength());
-			return vs.fromByteArray(read);
+			if (s == null) {
+				throw new KeyNotFoundException(k);
+			} else {
+				byte[] read = store.read(s.getPos(), s.getLength());
+				return vs.fromByteArray(read);
+			}
 		}
 	}
 
@@ -184,39 +189,43 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public void update(KeyImpl k, ValueListImpl v) throws KeyNotFoundException,
 			IOException {
-		SpaceIdent s = mappings.get(k);
+		synchronized (k.getKey().intern()) {
+			SpaceIdent s = mappings.get(k);
 
-		if (s == null) {
-			throw new KeyNotFoundException(k);
-		} else {
-			byte[] toWrite = vs.toByteArray(v);
-
-			int ldiff = s.getLength() - toWrite.length;
-
-			// if the currently used space is not big enough for the new value
-			if (ldiff < 0) {
-				// free the current space
-				freeSpace(s);
-
-				// find new space
-				s = findFreeSpace(toWrite.length);
-
-				// and store the new value there
-				store.write(s.getPos(), toWrite);
-				mappings.put(k, s);
+			if (s == null) {
+				throw new KeyNotFoundException(k);
 			} else {
-				// or, if the new value fits into the space of the new one
+				byte[] toWrite = vs.toByteArray(v);
 
-				// just write it into the current space
-				store.write(s.getPos(), toWrite);
+				int ldiff = s.getLength() - toWrite.length;
 
-				// and mark any leftover space as free
-				if (ldiff > 0) {
-					freeSpace(new SpaceIdent(s.getPos() + toWrite.length, ldiff));
+				// if the currently used space is not big enough for the new
+				// value
+				if (ldiff < 0) {
+					// free the current space
+					freeSpace(s);
+
+					// find new space
+					s = findFreeSpace(toWrite.length);
+
+					// and store the new value there
+					store.write(s.getPos(), toWrite);
+					mappings.put(k, s);
+				} else {
+					// or, if the new value fits into the space of the new one
+
+					// just write it into the current space
+					store.write(s.getPos(), toWrite);
+
+					// and mark any leftover space as free
+					if (ldiff > 0) {
+						freeSpace(new SpaceIdent(s.getPos() + toWrite.length,
+								ldiff));
+					}
+
+					// adjust the length value in the map
+					mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
 				}
-
-				// adjust the length value in the map
-				mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
 			}
 		}
 
