@@ -22,10 +22,6 @@ public class KeyValueBaseImplService extends KeyValueBaseImpl {
 	public KeyValueBaseImplService() {
 		super();
 	}
-
-	public KeyValueBaseImplService(IndexImpl index) {
-		super(index);
-	}
 	
 	@Override
 	@WebMethod
