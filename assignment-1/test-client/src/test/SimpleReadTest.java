@@ -81,7 +81,7 @@ public class SimpleReadTest {
 		boolean testSuccessfull = true;
 		int error_sum = 0;
 		
-		HashMap<String, String> testMap = new HashMap();
+		HashMap<String, String> testMap = new HashMap<String, String>();
 		
 		try {
 			//insert values
@@ -123,7 +123,7 @@ public class SimpleReadTest {
 				
 				ValueImpl value = new ValueImpl();
 				value.setValue(randomUpdateValue);
-				
+			
 				ValueListImpl valueUpdateList = new ValueListImpl();
 				valueUpdateList.getValueList().add(value);
 				
