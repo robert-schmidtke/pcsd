@@ -43,6 +43,22 @@
 \subsection*{Question 2}
 \label{sec:eq2}
 
+\begin{table}[htbp]
+\caption{Comparison of Storage}
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+ & Hard disk & SSD & Main Memory \\ \hline
+1 Access time &  &  &  \\ \hline
+2 Average Capacity &  &  &  \\ \hline
+3 Cost per unit &  &  &  \\ \hline
+4 Reliability &  &  &  \\ \hline
+5 Power Consumption &  &  &  \\ \hline
+\end{tabular}
+\end{center}
+\label{tab:storage}
+\end{table}
+
 \subsection*{Question 3}
 \label{sec:eq3}
 
@@ -61,6 +77,15 @@ There are basically three types of semantics: 'Exactly once', 'at most once' and
 
 \subsection*{Question 3}
 \label{sec:pq3}
+To continuously and consistently test our implementation we created a set of unit tests:
+\begin{itemize}
+\item SimpleReadWriteTest(N): This test simulates only one client that first inserts N values into the key-value store, and does then N sequential random updates and reads. For every read it checks if the values corresponds to a value that is kept locally in a Java Hash Map. The test fails if any read deviates from the expected value.
+\item MultiReadTest(N, h, n): This test simulates h clients (threads). First N values are (sequentially) inserted into the key-value store. Then the h clients make n random reads. For every read each thread checks if the values corresponds to a value that is kept in a shared Java Hash Map. The test fails if any read deviates from the expected value.
+\item MultiReadWriteTest(N, h, n) This test is similar to MultiReadTest(), but it will also do n random writes and after each write 10 random reads. As above the test fails if any read deviates from the expected value.
+\item AtomicUpdateTest()
+\item AtomicScanTest()
+\end{itemize}
+
 
 \subsection*{Question 4}
 \label{sec:pq4}

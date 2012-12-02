@@ -71,7 +71,7 @@ public class SimpleReadTest {
 	
 	@Test
 	public void uniformRandomWriteRead() {
-		int N = 1000;
+		int N = 10;
 		Random rnd = new Random();
 		boolean testSuccessfull = true;
 		int error_sum = 0;
