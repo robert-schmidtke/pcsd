@@ -10,7 +10,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
@@ -36,9 +39,13 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	// Mapping of keys to the respective parts of the MMF
 	private Map<KeyImpl, SpaceIdent> mappings = new Hashtable<KeyImpl, SpaceIdent>();
+	
+	// Lock on the mappings table
+	private final ReadWriteLock mappingsLock;
 
 	private IndexImpl() {
 		this.store = StoreImpl.getInstance();
+		mappingsLock = new ReentrantReadWriteLock(true);
 	}
 
 	public synchronized static IndexImpl getInstance() {
@@ -116,9 +123,11 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		writeLock.lock();
 		try {
 
-			if (mappings.containsKey(k)) {
+			mappingsLock.readLock().lock();
+			boolean containsKey = mappings.containsKey(k);
+			mappingsLock.readLock().unlock();
+			if (containsKey)
 				throw new KeyAlreadyPresentException(k);
-			}
 
 			byte[] toWrite = vs.toByteArray(v);
 
@@ -132,8 +141,10 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 			if (ldiff > 0)
 				emptyList.add(new SpaceIdent(space.getPos() + toWrite.length,
 						ldiff));
-
+			
+			mappingsLock.writeLock().lock();
 			mappings.put(k, space);
+			mappingsLock.writeLock().unlock();
 		} finally {
 			writeLock.unlock();
 		}
@@ -151,7 +162,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		Lock writeLock = k.getWriteLock();
 		writeLock.lock();
 		try {
+			mappingsLock.readLock().lock();
 			SpaceIdent s = mappings.get(k);
+			mappingsLock.readLock().unlock();
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -160,7 +173,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				freeSpace(s);
 
 				// and remove the key from the mapping
+				mappingsLock.writeLock().lock();
 				mappings.remove(k);
+				mappingsLock.writeLock().unlock();
 			}
 			k.removeLock();
 		} finally {
@@ -181,7 +196,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		Lock readLock = k.getReadLock();
 		readLock.lock();
 		try {
+			mappingsLock.readLock().lock();
 			SpaceIdent s = mappings.get(k);
+			mappingsLock.readLock().unlock();
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -207,7 +224,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		Lock writeLock = k.getWriteLock();
 		writeLock.lock();
 		try {
+			mappingsLock.readLock().lock();
 			SpaceIdent s = mappings.get(k);
+			mappingsLock.readLock().unlock();
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -227,7 +246,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 					// and store the new value there
 					store.write(s.getPos(), toWrite);
+					mappingsLock.writeLock().lock();
 					mappings.put(k, s);
+					mappingsLock.writeLock().unlock();
 				} else {
 					// or, if the new value fits into the space of the new one
 
@@ -241,7 +262,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 					}
 
 					// adjust the length value in the map
+					mappingsLock.writeLock().lock();
 					mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
+					mappingsLock.writeLock().unlock();
 				}
 			}
 		} finally {
@@ -263,7 +286,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		if (begin.compareTo(end) > 0)
 			throw new BeginGreaterThanEndException(begin, end);
 
-		Set<KeyImpl> keys = mappings.keySet();
+		mappingsLock.readLock().lock();
+		ConcurrentSkipListSet<KeyImpl> keys = new ConcurrentSkipListSet<KeyImpl>(mappings.keySet());
+		mappingsLock.readLock().unlock();
 
 		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
 
@@ -285,7 +310,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	@Override
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
+		mappingsLock.readLock().lock();
 		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		mappingsLock.readLock().unlock();
 		for (KeyImpl ki : keys) {
 			ki.getReadLock().lock();
 		}
@@ -314,13 +341,18 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	@Override
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
 			throws IOException {
+		mappingsLock.readLock().lock();
 		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		mappingsLock.readLock().unlock();
 		for (KeyImpl ki : keys) {
 			ki.getWriteLock().lock();
 		}
 		try {
 			for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
-				if (mappings.containsKey(p.getKey())) {
+				mappingsLock.readLock().lock();
+				boolean containsKey = mappings.containsKey(p.getKey());
+				mappingsLock.readLock().unlock();
+				if (containsKey) {
 					try {
 						update(p.getKey(), p.getValue());
 					} catch (KeyNotFoundException e) {
