@@ -75,8 +75,10 @@ public class MultiReadWriteTest {
 				ValueListImpl valueList = new ValueListImpl();
 				valueList.getValueList().add(value);
 				try{
+				
 				kvbis.insert(key, valueList);
 				testMap.put(keyValue, resultValue);
+				
 				} catch (KeyAlreadyPresentException_Exception e) {
 					//do nothing
 				} catch (IOException_Exception e) {
@@ -134,8 +136,10 @@ public class MultiReadWriteTest {
 					ValueListImpl valueList = new ValueListImpl();
 					valueList.getValueList().add(value);
 					try{
+
 					kvbis.insert(key, valueList);
 					testMap.put(keyValue, resultValue);
+					
 					} catch (KeyAlreadyPresentException_Exception e) {
 						//do nothing
 					} catch (IOException_Exception e) {
@@ -148,7 +152,7 @@ public class MultiReadWriteTest {
 					String randomUpdateKey = keys.get( rnd.nextInt(keys.size()) );
 					String randomUpdateValue  = String.valueOf(rnd.nextInt(99999));
 					
-					testMap.put(randomUpdateKey, randomUpdateValue);
+					
 					
 					KeyImpl keyUpdate = new KeyImpl();
 					keyUpdate.setKey(randomUpdateKey);
@@ -160,6 +164,7 @@ public class MultiReadWriteTest {
 					valueUpdateList.getValueList().add(valueUpdate);
 					
 					try {
+						testMap.put(randomUpdateKey, randomUpdateValue);
 						kvbis.update(keyUpdate, valueUpdateList);
 					} catch (IOException_Exception e1) {
 						e1.printStackTrace();
