@@ -5,9 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -24,7 +21,7 @@ import dk.diku.pcsd.assignment1.impl.ServiceNotInitializedException_Exception;
 import dk.diku.pcsd.assignment1.impl.ValueImpl;
 import dk.diku.pcsd.assignment1.impl.ValueListImpl;
 
-public class MultiReadWriteTest {
+public class AtomicUpdateTest {
 	static KeyValueBaseImplServiceService kvbiss;
 	static KeyValueBaseImplService kvbis;
 	
@@ -51,15 +48,8 @@ public class MultiReadWriteTest {
 	
 	@Test
 	public void parallelRead() {
-		//how often before
-		int N = 1000;
-		
-		//how many threads
-		int h = 10;
-		//how many writes per thread (makes 10 reads per write))
-		int n = 100;
-		
-		Random rnd = new Random();		
+		Random rnd = new Random();	
+		int N = 10;
 		
 		//write N key values in hashmap and store
 		for (int i=0; i<N; i++) {
@@ -75,10 +65,8 @@ public class MultiReadWriteTest {
 				ValueListImpl valueList = new ValueListImpl();
 				valueList.getValueList().add(value);
 				try{
-				
 				kvbis.insert(key, valueList);
 				testMap.put(keyValue, resultValue);
-				
 				} catch (KeyAlreadyPresentException_Exception e) {
 					//do nothing
 				} catch (IOException_Exception e) {
@@ -89,91 +77,107 @@ public class MultiReadWriteTest {
 			}
 			
 			keys = new ArrayList<String>(testMap.keySet());
+			String randomUpdateKey = keys.get( rnd.nextInt(keys.size()) );
 		
-			//make threads and let them read and write
-			ExecutorService executor = Executors.newFixedThreadPool(h);
-		    for (int i = 0; i < h; i++) {
-		      Runnable worker = new ReadThread(n);
-		      executor.execute(worker);
-		    }
-		    // This will make the executor accept no new threads
-		    // and finish all existing threads in the queue
-		    executor.shutdown();
-		    // Wait until all threads are finish
-		    while (!executor.isTerminated()) {
-
-		    }
+			Runnable updater = new UpdateThread(randomUpdateKey);
+			Thread updateThread = new Thread(updater);
+			updateThread.start();
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			Runnable reader = new ReadThread(randomUpdateKey);
+			Thread readThread = new Thread(reader);
+			readThread.start();
 		    		
 		    //if one read failed fail test case
 		    assertTrue("Result", testSuccessfull);
 		
 	}
 	
-	public static class ReadThread implements Runnable {
-		int n;
+	public static class UpdateThread implements Runnable {
+		String key;
 		
-		ReadThread(int n) {
-			  this.n = n;
+		public UpdateThread(String key){
+			this.key = key;
 		}
 
 		@Override
 		public void run() {
 			Random rnd = new Random();
-			String actualValue = "";
-			String expectedValue = "";
+			//a random update
 			
-			for (int i=0;i<this.n;i++){
-					//write here
-					String keyValue = String.valueOf(rnd.nextInt(999999));
-					String resultValue = String.valueOf(rnd.nextInt(99999));
-					
-					KeyImpl key = new KeyImpl();
-					key.setKey(keyValue);
-					
-					ValueImpl value = new ValueImpl();
-					value.setValue(resultValue);
-					
-					ValueListImpl valueList = new ValueListImpl();
-					valueList.getValueList().add(value);
-					try{
+			
+			String randomUpdateValue  = String.valueOf(rnd.nextInt(99999));
+			
+			testMap.put(this.key, randomUpdateValue);
+			
+			KeyImpl keyUpdate = new KeyImpl();
+			keyUpdate.setKey(key);
+			
+			ValueImpl value = new ValueImpl();
+			value.setValue(randomUpdateValue);
+		
+			ValueListImpl valueUpdateList = new ValueListImpl();
+			valueUpdateList.getValueList().add(value);
+			
+			try {
+				System.out.println("Start updating!");
+	
+				kvbis.update(keyUpdate, valueUpdateList);
+				System.out.println("Hey: " + keyUpdate + " "+randomUpdateValue);
+				
+			} catch (IOException_Exception e) {
+				e.printStackTrace();
+				System.out.println("1");
+			} catch (KeyNotFoundException_Exception e) {
+				e.printStackTrace();
+				System.out.println("2");
+			} catch (ServiceNotInitializedException_Exception e) {
+				e.printStackTrace();
+				System.out.println("3");
+			}
+			}	
+	}
+	 
+	public static class ReadThread implements Runnable {
+		String key;
+		
+		public ReadThread(String key){
+			this.key = key;
+		}
 
-					kvbis.insert(key, valueList);
-					testMap.put(keyValue, resultValue);
-					
-					} catch (KeyAlreadyPresentException_Exception e) {
-						//do nothing
-					} catch (IOException_Exception e) {
-						e.printStackTrace();
-					} catch (ServiceNotInitializedException_Exception e) {
-						e.printStackTrace();
-					}		
-					
-					//read here
-					for (int j=0; j<10; j++){
-						try{
-						String randomReadKey = keys.get(rnd.nextInt(keys.size()));
-						
-						KeyImpl keyRead = new KeyImpl();
-						keyRead.setKey(randomReadKey);
-						
-						expectedValue = testMap.get(randomReadKey);
-						actualValue = kvbis.read(keyRead).getValueList().get(0).getValue().toString();
-						} catch (IOException_Exception e) {
-							e.printStackTrace();
-						} catch (KeyNotFoundException_Exception e) {
-							e.printStackTrace();
-						} catch (ServiceNotInitializedException_Exception e) {
-							e.printStackTrace();
-						}
-						
-						if (!expectedValue.equals(actualValue)) {
-							testSuccessfull = false;
-							System.out.println("Fehler: " + expectedValue + " " + actualValue);
-						}
-					}
+			@Override
+			public void run() {
+				Random rnd = new Random();
+				String actualValue = "";
+			
+				KeyImpl keyRead = new KeyImpl();
+				keyRead.setKey(this.key);
 				
-				
+				try {
+					System.out.println("Start reading!");
+					actualValue = kvbis.read(keyRead).getValueList().get(0).getValue().toString();
+					System.out.println("Hey: " + keyRead + " "+actualValue);
+				} catch (IOException_Exception e) {
+					e.printStackTrace();
+					System.out.println("4");
+				} catch (KeyNotFoundException_Exception e) {
+					e.printStackTrace();
+					System.out.println("5");
+				} catch (ServiceNotInitializedException_Exception e) {
+					e.printStackTrace();
+					System.out.println("6");
+				}
+									
 			}	
 		}
-	} 
+			
 }
+	
+	
+	
+
