@@ -69,7 +69,20 @@ Caching is a perfect example for fast path optimization. It means that, in addit
 
 \subsection*{Question 4}
 \label{sec:eq4}
-Marco
+Question 4 (Experimental Design). [Lilja, partial] Devise an experiment to determine the following
+performance metrics for a computer system:
+(a) The effective memory bandwidth between the processor and the data cache if all memory
+references are cache hits. Make sure to describe in your setup how you manage to ensure that all
+references measured are cache hits and why your setup achieves that.
+(b) The effective memory bandwidth if all memory references are cache misses. Make sure to
+describe in your setup how you manage to ensure that all references measured are cache misses
+and why your setup achieves that.
+
+
+\subsubsection*{(a)}
+
+
+\subsubsection*{(b)}
 
 \section*{Programming Task}
 \label{sec:programming}
@@ -80,8 +93,14 @@ There are basically three types of semantics: 'Exactly once', 'at most once' and
 
 \subsection*{Question 2}
 \label{sec:pq2}
+Explain the main elements of your implementation of the first version of KeyValueBase.
+In particular, describe the mechanisms you used to enforce atomicity of operations (e.g., locks or
+monitors) and how you used them. In addition, describe how you implemented free-space management. (2
+paragraphs)
 
-Marco
+We do all memory management and locking and most of the store's logic in IndexImpl, which is a singleton. The current key-value-pairs are managed in a Hashtable, which maps keys to a SpaceIdent object, which in turn contains a value's position and length in the memory mapped file. We also have a list of SpaceIdents which specify all empty areas in the store, i.e. areas that may be overwritten and used by new values. Space is declared to be free when a value is deleted, or when it is updated with a value which does not fit into the currently allocated space. In the latter case, the old space is marked as free and a new free area is found which is large enough to contain the new value. If no such place is found in the emptyList, the new value is spaced at the end of the currently used space. The same happens with inserts. The emptyList is sorted by the SpaceIdent's location. In order to avoid fragmentation of the store, adjacent free areas are joined every time free space is requested (since this requires a traversal of the emptyList anyway). 
+
+We use Java's ReadWriteLock API for locking. The KeyImpl class manages another Hashtable which maps each key to its own ReadWriteLock object, so that each key can be locked on its own and we can distinguish between read and write access. We hope that this granular locking will result in maximal concurrency and therefore maximal performance for our store. When inserting new completely new keys, which do not have a lock yet, we use Java's \texttt{synchronized} on the new key to avoid creating duplicate locks for the same key. In all cases, we acquire all necessary locks at the start of a method and release them again at the end (Conservative Strict 2PL), because we did not want to deal with deadlocks or cascading aborts. For tasks larger than a single key, e.g. atomicScan, we simply acquire the locks for all keys in the order of the keys, while also locking the mapping itself, so that no new keys can be inserted during the operation.
 
 \subsection*{Question 3}
 \label{sec:pq3}
