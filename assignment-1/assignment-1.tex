@@ -42,6 +42,7 @@
 
 \subsection*{Question 2}
 \label{sec:eq2}
+Le Voss!
 
 \begin{table}[htbp]
 \caption{Comparison of Storage}
@@ -61,9 +62,30 @@
 
 \subsection*{Question 3}
 \label{sec:eq3}
+(a) How does concurrency influence latency in a computer system? Is its influence always positive,
+always negative, or is there a trade-off? Explain. (2 paragraphs)
+(b) Explain the difference between dallying and batching. Provide one example of each. (2
+paragraphs)
+(c) Is caching an example of a fast path optimization? Explain why or why not. (1 paragraph)
+
+\subsubsection*{(a)}
+While concurrency usually has a positive effect on a system's latency, there may also be cases where this effect is only marginal or even negative. In general, the ability to process several requests at once means that some requests can be worked on right away instead of having to wait for the completion of another request, or at least that qaiting time is reduced. However, this is only true if the system's utilizaztion is high enough. If, on the other hand, the system's utilization is low and it only ever has one request at a time do work with, concurrency will not have a positive effect at all. In this case, it might even have a slightly negative effect, since the added overhead for work distribution and scheduling will add to the latency of every single request.
+
+In the above paragraph, we assumed that the system's hardware natively supports concurrency, which is usually the case nowadays, so that several units of work can actually be executed at the same time. If, however, the system only simulates concurrent execution, the impact on the latency will quite probably always be negative. In this case the system would start working on several tasks at once and distribute the processor's computing time between them. While fewer (or no) tasks would have to wait before they are started, the work on every task will take considerably longer. Combined with the overhead from scheduling etc., the overall latency would be at least as high as with serial execution.
+
+\subsubsection*{(b)}
+Batching means performing a number of related tasks at the same time instead of doing each one on its own, usually in order to reduce the overall overhead: Often the overhead for specific tasks stays the same, independent of the size of the task. In this case it can be advantageous to combine several tasks into one, so that the overhead occurs only once and not once for every task. There may be additional performance benefits that arise from similarities or a certain order of the tasks. 
+
+Dallying, on the other hand, means that one delays the execution of a task to get some kind of performance benefit. One reason to do this is because it might not actually be necessary to execute the task after all (but this is not yet clear). The other reason is related to batching: One delays the execution of several small tasks and waits until a certain number of such tasks has been collected. This collection of tasks is then executed at once (using batch execution) in order to profit from the reduced overhead, as described above. Batching may therefore be a part of (or a motivation for) dallying.
+
+Batching is quite common in computing as well as in the real world. TODO
+
+\subsubsection*{(c)}
+Caching is a perfect example for fast path optimization. It means that, in addition to the normal and relatively slow way of accessing data, which usually means accessing RAM or a disk or network resource, there is another, much faster way for common requests. This faster way does not work for all kinds of requests (otherwise one would not use the slower one at all), in our case because a cache is typically at least an order of magnitude smaller than the actual memory. A good cache therefore contains those parts of the memory that are accessed most frequently, and getting data from the cache is much faster than getting them from the actual memory. 
 
 \subsection*{Question 4}
 \label{sec:eq4}
+Marco
 
 \section*{Programming Task}
 \label{sec:programming}
@@ -74,6 +96,8 @@ There are basically three types of semantics: 'Exactly once', 'at most once' and
 
 \subsection*{Question 2}
 \label{sec:pq2}
+
+Marco
 
 \subsection*{Question 3}
 \label{sec:pq3}
@@ -87,6 +111,8 @@ To continuously and consistently test our implementation we created a set of uni
 \end{itemize}
 
 
+Vossi / Marco
+
 \subsection*{Question 4}
 \label{sec:pq4}
 
@@ -97,12 +123,15 @@ data set used is\footnote{Downloaded from: \url{http://an.kaist.ac.kr/~haewoon/r
 
 \subsection*{Question 6}
 \label{sec:pq6}
+Vossi
 
 \subsection*{Question 7}
 \label{sec:pq7} 
+Vossi
 
 \subsection*{Question 8}
 \label{sec:pq8}
+Marco
 
 \subsection*{Question 9}
 \label{sec:pq9}
