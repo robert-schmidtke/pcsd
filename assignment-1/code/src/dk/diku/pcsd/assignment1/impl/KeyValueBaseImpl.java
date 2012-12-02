@@ -159,15 +159,23 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end,
 			Predicate<ValueListImpl> p) throws IOException,
 			BeginGreaterThanEndException, ServiceNotInitializedException {
-		// TODO Auto-generated method stub
-		return null;
+		if (!initialized)
+			throw new ServiceNotInitializedException();
+		List<ValueListImpl> allValues = index.atomicScan(begin, end);
+		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext();) {
+			ValueListImpl current = i.next();
+			if (!p.evaluate(current))
+				i.remove();
+		}
+		return allValues;
 	}
 
 	@Override
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> mappings)
 			throws IOException, ServiceNotInitializedException {
-		// TODO Auto-generated method stub
-
+		if (!initialized)
+			throw new ServiceNotInitializedException();
+		index.bulkPut(mappings);
 	}
 
 }

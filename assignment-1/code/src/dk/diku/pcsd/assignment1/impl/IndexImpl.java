@@ -285,14 +285,62 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	@Override
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		for (KeyImpl ki : keys) {
+			ki.getReadLock().lock();
+		}
+		try {
+			List<ValueListImpl> result = new ArrayList<ValueListImpl>();
+
+			for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
+				KeyImpl current = i.next();
+				if (begin.compareTo(current) <= 0
+						&& end.compareTo(current) >= 0) {
+					try {
+						result.add(get(current));
+					} catch (KeyNotFoundException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			return result;
+		} finally {
+			for (KeyImpl ki : keys) {
+				ki.getReadLock().unlock();
+			}
+		}
 	}
 
 	@Override
-	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> keys)
+	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
 			throws IOException {
-		// TODO Auto-generated method stub
+		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		for (KeyImpl ki : keys) {
+			ki.getWriteLock().lock();
+		}
+		try {
+			for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
+				if (mappings.containsKey(p.getKey())) {
+					try {
+						update(p.getKey(), p.getValue());
+					} catch (KeyNotFoundException e) {
+						// This can never ever happen
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						insert(p.getKey(), p.getValue());
+					} catch (KeyAlreadyPresentException e) {
+						// This can never ever ever ever happen.
+						e.printStackTrace();
+					}
+				}
+			}
+		} finally {
+			for (KeyImpl ki : keys) {
+				ki.getWriteLock().unlock();
+			}
+		}
 
 	}
 
