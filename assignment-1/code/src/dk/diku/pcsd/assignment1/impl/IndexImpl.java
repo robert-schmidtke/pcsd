@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.locks.Lock;
 
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
@@ -111,7 +112,10 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public void insert(KeyImpl k, ValueListImpl v)
 			throws KeyAlreadyPresentException, IOException {
-		synchronized (k.getKey().intern()) {
+		Lock writeLock = k.getWriteLock();
+		writeLock.lock();
+		try {
+
 			if (mappings.containsKey(k)) {
 				throw new KeyAlreadyPresentException(k);
 			}
@@ -130,6 +134,8 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 						ldiff));
 
 			mappings.put(k, space);
+		} finally {
+			writeLock.unlock();
 		}
 	}
 
@@ -142,7 +148,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 * .interfaces.Key)
 	 */
 	public void remove(KeyImpl k) throws KeyNotFoundException {
-		synchronized (k.getKey().intern()) {
+		Lock writeLock = k.getWriteLock();
+		writeLock.lock();
+		try {
 			SpaceIdent s = mappings.get(k);
 
 			if (s == null) {
@@ -154,6 +162,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				// and remove the key from the mapping
 				mappings.remove(k);
 			}
+			k.removeLock();
+		} finally {
+			writeLock.unlock();
 		}
 	}
 
@@ -167,7 +178,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public ValueListImpl get(KeyImpl k) throws KeyNotFoundException,
 			IOException {
-		synchronized (k.getKey().intern()) {
+		Lock readLock = k.getReadLock();
+		readLock.lock();
+		try {
 			SpaceIdent s = mappings.get(k);
 
 			if (s == null) {
@@ -176,6 +189,8 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				byte[] read = store.read(s.getPos(), s.getLength());
 				return vs.fromByteArray(read);
 			}
+		} finally {
+			readLock.unlock();
 		}
 	}
 
@@ -189,7 +204,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	 */
 	public void update(KeyImpl k, ValueListImpl v) throws KeyNotFoundException,
 			IOException {
-		synchronized (k.getKey().intern()) {
+		Lock writeLock = k.getWriteLock();
+		writeLock.lock();
+		try {
 			SpaceIdent s = mappings.get(k);
 
 			if (s == null) {
@@ -227,8 +244,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 					mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
 				}
 			}
+		} finally {
+			writeLock.unlock();
 		}
-
 	}
 
 	/*
@@ -267,14 +285,62 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	@Override
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		for (KeyImpl ki : keys) {
+			ki.getReadLock().lock();
+		}
+		try {
+			List<ValueListImpl> result = new ArrayList<ValueListImpl>();
+
+			for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
+				KeyImpl current = i.next();
+				if (begin.compareTo(current) <= 0
+						&& end.compareTo(current) >= 0) {
+					try {
+						result.add(get(current));
+					} catch (KeyNotFoundException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			return result;
+		} finally {
+			for (KeyImpl ki : keys) {
+				ki.getReadLock().unlock();
+			}
+		}
 	}
 
 	@Override
-	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> keys)
+	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
 			throws IOException {
-		// TODO Auto-generated method stub
+		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+		for (KeyImpl ki : keys) {
+			ki.getWriteLock().lock();
+		}
+		try {
+			for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
+				if (mappings.containsKey(p.getKey())) {
+					try {
+						update(p.getKey(), p.getValue());
+					} catch (KeyNotFoundException e) {
+						// This can never ever happen
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						insert(p.getKey(), p.getValue());
+					} catch (KeyAlreadyPresentException e) {
+						// This can never ever ever ever happen.
+						e.printStackTrace();
+					}
+				}
+			}
+		} finally {
+			for (KeyImpl ki : keys) {
+				ki.getWriteLock().unlock();
+			}
+		}
 
 	}
 
