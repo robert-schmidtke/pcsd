@@ -17,6 +17,9 @@
 \usepackage{graphicx}
 \usepackage{subfigure}
 \usepackage{hyperref}
+\usepackage{threeparttable}
+\usepackage{footnote}
+\makesavenoteenv{tabular}
 
 \lhead{\textbf{\Module}}
 \rhead{\Uebung~(Submission: \Sub_date)}
@@ -42,23 +45,27 @@
 
 \subsection*{Question 2}
 \label{sec:eq2}
-Le Voss!
 
+\subsubsection*{(a)}
 \begin{table}[htbp]
 \caption{Comparison of Storage}
 \begin{center}
-\begin{tabular}{|l|l|l|l|}
+\begin{tabular}{|p{0.35\textwidth}|l|l|l|}
 \hline
  & Hard disk & SSD & Main Memory \\ \hline
-1 Access time &  &  &  \\ \hline
-2 Average Capacity &  &  &  \\ \hline
-3 Cost per unit &  &  &  \\ \hline
-4 Reliability &  &  &  \\ \hline
-5 Power Consumption &  &  &  \\ \hline
+1 Access time read/write & 6.78 ms/8.83 ms & 0.04 ms/0.05 ms & 100 ns/100 ns \\ \hline
+2 Average Capacity & 1 TB & 128GB & 16GB \\ \hline
+3 Cost per unit & 267.59\$ ($\frac{0.26\$}{GB}$) & 109.99\$ ($\frac{0.86\$}{GB}$) & 390.00\$ ($\frac{24.37\$}{GB}$) \\ \hline
+4 Reliability (MTBF) & 1-1.5 mio. hours & 1-2 mio. hours & 6-11 mio. hours \\ \hline
+5 Power Consumption idle/typical/max write (per h) & 4/6.5/5.5 watt& 0.3/1.3/2.5 watt & about 4 watt \\ \hline
 \end{tabular}
 \end{center}
 \label{tab:storage}
 \end{table}
+
+Table \ref{tab:storage} shows evaluation numbers obtained from a web search. For hard disk (HDD) and solid state disk (SSD) the numbers for dimensions 1-3 and 5 are well comparable as they are from the same source. Numbers where taken from the fastest (access reading time) hard disk\footnote{\url{http://www.tomshardware.com/charts/hdd-charts-2012/compare,2898.html?prod\%5B5531\%5D=on} [last accessed: 03.12.2012]} and SSD\footnote{\url{http://www.tomshardware.com/charts/ssd-charts-2012/compare,2788.html?prod\%5B5837\%5D=on} [last accessed: 03.12.2012]} in the respective benchmark test for each of the categories\footnote{\emph{HDD Charts 2012} and \emph{SSD Charts 2012}}. These numbers are however for desktop systems, but we can assume that it is in the same range for server systems. To assess reliability a common measure is Mean Time Before Failure (MTBF, but also found as Mean Time To Failure). The figures for the HDD is from \cite{Schroeder2007} and gives a range that is typically stated to be 1-1.5 mio. hours\footnote{Although the paper analyses these claims and finds that these numbers are mostly exaggerated}. For SSD we could find a similar range of about 1-2 mio. hours\footnote{\url{http://solid-state-drive-review.toptenreviews.com/} [last accessed: 03.12.2012]}. Finding specific and reliable numbers for main memory (RAM) was not as easy as for the storage disks, as they are benchmarked in different ways and with different measures. Access times are not found that specifically. However, they are in a much smaller range. While disk access times (SSD and HDD) are reported in milliseconds ($10^{-3}$), they are in the range of nanoseconds for RAM ($10^{-9}$), as found in \cite{Dean}. Figures for reliability and power consumption where not found from realiable sources, and are only estimates based on posts in forums\footnote{MTBF: \url{http://www.theriac.org/forum/showthread.php?t=12954} and power consumption: \url{http://answers.yahoo.com/question/index?qid=20100711051719AAVSIhe},
+\url{http://www.tomshardware.com/reviews/lovo-ddr3-power,2650.html} [all last accessed: 03.12.2012]}. Also the size and price ranges depend a lot on the type of system. We chose rather randomly a representative example\footnote{\url{http://h30094.www3.hp.com/product.aspx?sku=10239599} [last accessed: 03.12.2012]}.
+
 
 \subsection*{Question 3}
 \label{sec:eq3}
@@ -149,5 +156,15 @@ Marco
 Out implementation of \texttt{atomicScan} differs from the normal \texttt{scan} only in one way. At the start of the function, we first acquire a read lock on the key-to-space-map, then we get read locks for all keys that are currently in the map. We do this in order, from the smallest key to the largest, in order to avoid deadlocks. Once we have all the locks, we execute the scan, i.e. we iterate through all keys, check if they are in the specified range, and return a list of those that are. The evaluation of the predicate is implemented in KeyValueBaseImpl (as opposed to the rest, which is in IndexImpl) and is identical to that of regular scan. Finally, we release the locks on all the keys and subsequently the lock on the map.
 
 TODO bulkPut
+
+\begin{thebibliography}{1}
+
+\bibitem[Schroeder2007]{Schroeder2007} Bianca Schroeder and Garth A. Gibson. 2007. Disk failures in the real world: what does an MTTF of 1,000,000 hours mean to you?. In Proceedings of the 5th USENIX conference on File and Storage Technologies Schroeder2007(FAST '07). USENIX Association, Berkeley, CA, USA, , Article 1 .
+
+\bibitem[Dean]{Dean} Jeff Dean. n.y. as found in: Marcos Vaz Salles. PCSD. lecture: Experimental Design - Concurrency Control: 2PL, p.9.
+
+\end{thebibliography}
+
+
 
 \end{document}
