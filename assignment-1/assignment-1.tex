@@ -42,6 +42,27 @@
 
 \subsection*{Question 1}
 \label{sec:eq1}
+\subsubsection*{(a)}
+TODO offsets
+A very simple way of translating addresses from single machines to a single address space would be to prepend every address on individual machines with an identifier for the respective machine (and leave the rest of the address unchanged). This has several advantages over more complicated schemes: reading from the store would simply mean looking up the first few bits and contacting the machine associated with them, and accessing the memory at the address specified by the rest of the address, without any further translation. All that is needed is a central component which maps the identifiers to physical addresses. Since these mappings could also be cached by clients, this mapping component would not have a very high workload for each additional client, which would mean that the whole system should scale well. It would also have to monitor if all machines are still online, and notify clients when one goes down. But all actuall data traffic could go directly from the clients to the storage machines and back. This design would also have the advantage that clients can actually see which parts of the memory are located on the same machine, and can take advantage of this knowledge for performance optimizations (for example in order batch requests to the same machine).
+
+This kind of abstraction would be very fast and scales well, but it would be hard extend with added functionality like redundancy or adding and removing storage at runtime. For these cases, a stronger central component would be needed through which all traffic would have to go. So while this makes the whole architecture much more flexible, it also creates a bottleneck .
+\subsubsection*{(b)}
+TODO
+(b) Show the pseudocode and API of the READ and WRITE functions of your memory abstraction.
+Note that your pseudocode should show both translation of addresses (naming) as well as
+communicate with individual machines to obtain the actual data. (for each function: API + 1-2
+sentence description of API + pseudocode)
+\begin{itemize}
+  \item \texttt{getStorageAttributes()}
+  \item \texttt{getOffsets()}
+  \item \texttt{read(long offset, int length)}
+  \item \texttt{write(long offset, byte[] data)}
+\end{itemize}
+
+
+\subsubsection*{(c)}
+Simple operations against main memory are TODO atomic. For our memory abstraction, we would definitely make basic operations non-atomic (unless we know for certain that it will only ever be used for purposes that require atomicity). Guaranteeing atomicity always comes with a performance cost, and a basic component like memory should offer the possibility to read and write as fast as possible for cases where atomicity is not needed. It is always possible to make wrappers for existing functions that do guarantee atomicity (simply by implementing read and write locks for parts of the memory, e.g. a lock for every page), whereas it is not possible to get rid of the overhead if atomicity is implemented in the memory (abstraction) itself.
 
 \subsection*{Question 2}
 \label{sec:eq2}
