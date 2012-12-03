@@ -43,10 +43,7 @@
 \subsection*{Question 1}
 \label{sec:eq1}
 \subsubsection*{(a)}
-TODO offsets
-A very simple way of translating addresses from single machines to a single address space would be to prepend every address on individual machines with an identifier for the respective machine (and leave the rest of the address unchanged). This has several advantages over more complicated schemes: reading from the store would simply mean looking up the first few bits and contacting the machine associated with them, and accessing the memory at the address specified by the rest of the address, without any further translation. All that is needed is a central component which maps the identifiers to physical addresses. Since these mappings could also be cached by clients, this mapping component would not have a very high workload for each additional client, which would mean that the whole system should scale well. It would also have to monitor if all machines are still online, and notify clients when one goes down. But all actuall data traffic could go directly from the clients to the storage machines and back. This design would also have the advantage that clients can actually see which parts of the memory are located on the same machine, and can take advantage of this knowledge for performance optimizations (for example in order batch requests to the same machine).
-
-This kind of abstraction would be very fast and scales well, but it would be hard extend with added functionality like redundancy or adding and removing storage at runtime. For these cases, a stronger central component would be needed through which all traffic would have to go. So while this makes the whole architecture much more flexible, it also creates a bottleneck .
+TODO
 \subsubsection*{(b)}
 TODO
 (b) Show the pseudocode and API of the READ and WRITE functions of your memory abstraction.
@@ -108,21 +105,12 @@ Caching is a perfect example for fast path optimization. It means that, in addit
 
 \subsection*{Question 4}
 \label{sec:eq4}
-Question 4 (Experimental Design). [Lilja, partial] Devise an experiment to determine the following
-performance metrics for a computer system:
-(a) The effective memory bandwidth between the processor and the data cache if all memory
-references are cache hits. Make sure to describe in your setup how you manage to ensure that all
-references measured are cache hits and why your setup achieves that.
-(b) The effective memory bandwidth if all memory references are cache misses. Make sure to
-describe in your setup how you manage to ensure that all references measured are cache misses
-and why your setup achieves that.
-
 
 \subsubsection*{(a)}
-
-
+Typical caches use two properties to decide which parts of the memory to keep in the cache: temporal locality and spatial locality. This means that data is cached if a) it has been requested in the (recent) past or b) it is physically close to data that has already been requested. Therefore we would need to write a test program that selects an area in memory that fits into the cache and repeatedly accesses random parts of this area for some time before starting the measurement. Then it should first save the current time and then read parts of the memory in the selected area that amount to a certain size. We might either choose to read many small parts of said memory, if we want to concentrate on measuring the latency for a single cache access, or few large parts if we care about the actual bandwidth. We then check how much time has passed and return the result in bytes per second.
 
 \subsubsection*{(b)}
+TODO
 
 \section*{Programming Task}
 \label{sec:programming}
