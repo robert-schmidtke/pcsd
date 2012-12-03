@@ -62,11 +62,6 @@ Le Voss!
 
 \subsection*{Question 3}
 \label{sec:eq3}
-(a) How does concurrency influence latency in a computer system? Is its influence always positive,
-always negative, or is there a trade-off? Explain. (2 paragraphs)
-(b) Explain the difference between dallying and batching. Provide one example of each. (2
-paragraphs)
-(c) Is caching an example of a fast path optimization? Explain why or why not. (1 paragraph)
 
 \subsubsection*{(a)}
 While concurrency usually has a positive effect on a system's latency, there may also be cases where this effect is only marginal or even negative. In general, the ability to process several requests at once means that some requests can be worked on right away instead of having to wait for the completion of another request, or at least that qaiting time is reduced. However, this is only true if the system's utilizaztion is high enough. If, on the other hand, the system's utilization is low and it only ever has one request at a time do work with, concurrency will not have a positive effect at all. In this case, it might even have a slightly negative effect, since the added overhead for work distribution and scheduling will add to the latency of every single request.
@@ -78,7 +73,7 @@ Batching means performing a number of related tasks at the same time instead of 
 
 Dallying, on the other hand, means that one delays the execution of a task to get some kind of performance benefit. One reason to do this is because it might not actually be necessary to execute the task after all (but this is not yet clear). The other reason is related to batching: One delays the execution of several small tasks and waits until a certain number of such tasks has been collected. This collection of tasks is then executed at once (using batch execution) in order to profit from the reduced overhead, as described above. Batching may therefore be a part of (or a motivation for) dallying.
 
-Batching is quite common in computing as well as in the real world. TODO
+Both batching and dallying are quite common in computing as well as in the real world. Message passing is an example where batching can reduce the overall overhead considerably, since the static overhead for sending one message is usually much lower than for sending several smaller ones. An example where dallying could be used is our key-value-store: if there are several operations on a single key, one of which negates the effects of a previous one (e.g. overwrited or deletes the value), then the operation(s) before the last operation can be left our. A real world example where dallying is used to use batching is washing dishes: If one waits for a few days until washing dishes again, one can wash more plates at once, and therefore the overhead of letting water into the sink etc. occurs only once instead of several times.
 
 \subsubsection*{(c)}
 Caching is a perfect example for fast path optimization. It means that, in addition to the normal and relatively slow way of accessing data, which usually means accessing RAM or a disk or network resource, there is another, much faster way for common requests. This faster way does not work for all kinds of requests (otherwise one would not use the slower one at all), in our case because a cache is typically at least an order of magnitude smaller than the actual memory. A good cache therefore contains those parts of the memory that are accessed most frequently, and getting data from the cache is much faster than getting them from the actual memory. 
@@ -98,6 +93,7 @@ and why your setup achieves that.
 \subsubsection*{(a)}
 
 
+
 \subsubsection*{(b)}
 
 \section*{Programming Task}
@@ -109,10 +105,6 @@ There are basically three types of semantics: 'Exactly once', 'at most once' and
 
 \subsection*{Question 2}
 \label{sec:pq2}
-Explain the main elements of your implementation of the first version of KeyValueBase.
-In particular, describe the mechanisms you used to enforce atomicity of operations (e.g., locks or
-monitors) and how you used them. In addition, describe how you implemented free-space management. (2
-paragraphs)
 
 We do all memory management and locking and most of the store's logic in IndexImpl, which is a singleton. The current key-value-pairs are managed in a Hashtable, which maps keys to a SpaceIdent object, which in turn contains a value's position and length in the memory mapped file. We also have a list of SpaceIdents which specify all empty areas in the store, i.e. areas that may be overwritten and used by new values. Space is declared to be free when a value is deleted, or when it is updated with a value which does not fit into the currently allocated space. In the latter case, the old space is marked as free and a new free area is found which is large enough to contain the new value. If no such place is found in the emptyList, the new value is spaced at the end of the currently used space. The same happens with inserts. The emptyList is sorted by the SpaceIdent's location. In order to avoid fragmentation of the store, adjacent free areas are joined every time free space is requested (since this requires a traversal of the emptyList anyway). The actual memory mapped file is stored in a subdirectory of the temporary path denoted by the Java environment variable 'java.io.tmpdir', which may be configured in the application server the service is deployed in. The subdirectory is 'dk/diku/pcsd/assignment1/impl/' and the file will be called 'store.mmf'. If it already exists, that file will be used, if it does not exist, a 1MB file will be created (so by supplying a rather large 'store.mmf' file you can increase the amount of values that can be stored).
 
@@ -130,7 +122,7 @@ To continuously and consistently test our implementation we created a set of uni
 \end{itemize}
 
 
-Vossi / Marco
+Vossi
 
 \subsection*{Question 4}
 \label{sec:pq4}
@@ -154,6 +146,8 @@ Marco
 
 \subsection*{Question 9}
 \label{sec:pq9}
-Kaniner!
+Out implementation of \texttt{atomicScan} differs from the normal \texttt{scan} only in one way. At the start of the function, we first acquire a read lock on the key-to-space-map, then we get read locks for all keys that are currently in the map. We do this in order, from the smallest key to the largest, in order to avoid deadlocks. Once we have all the locks, we execute the scan, i.e. we iterate through all keys, check if they are in the specified range, and return a list of those that are. The evaluation of the predicate is implemented in KeyValueBaseImpl (as opposed to the rest, which is in IndexImpl) and is identical to that of regular scan. Finally, we release the locks on all the keys and subsequently the lock on the map.
+
+TODO bulkPut
 
 \end{document}
