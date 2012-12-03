@@ -17,6 +17,9 @@ import dk.diku.pcsd.assignment1.impl.ValueListImpl;
 
 public class ScanAndBulkPutTest {
 	
+	// used for making all keys equally long
+	private static final int keyLength = 5;
+	
 	private static final KeyValueBaseImplService kvbis = new KeyValueBaseImplServiceService().getKeyValueBaseImplServicePort();
 	
 	@BeforeClass
@@ -30,30 +33,21 @@ public class ScanAndBulkPutTest {
 	
 	@Test
 	public void testScan() {
+		final int fromIndex = 0;
 		final int numKeys = 5000;
-		final int keyLength = Integer.toString(numKeys).length();
+		final int toIndex = fromIndex + numKeys - 1;
 		
-		for(int i = 0; i < numKeys; ++i) {
-			KeyImpl key = new KeyImpl();
-			key.setKey(padZeros(Integer.toString(i), keyLength));
-			
-			ValueListImpl valueList = new ValueListImpl();
-			ValueImpl value = new ValueImpl();
-			value.setValue("initialValue");
-			valueList.getValueList().add(value);
-			
-			try {
-				kvbis.insert(key, valueList);
-			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage(), e);
-			} 
-		}
+		// initialize our range with value that is found by the predicate
+		insertRange(fromIndex, toIndex, "initialValue");
+		
+		// prepare search keys
+		final KeyImpl from = new KeyImpl();
+		from.setKey(padZeros(Integer.toString(fromIndex), keyLength));
+		
+		final KeyImpl to = new KeyImpl();
+		to.setKey(padZeros(Integer.toString(toIndex), keyLength));
 		
 		// start the scan
-		final KeyImpl from = new KeyImpl();
-		from.setKey(padZeros("0", keyLength));
-		final KeyImpl to = new KeyImpl();
-		to.setKey(Integer.toString(numKeys));
 		final List<ValueListImpl> scanResult = new ArrayList<ValueListImpl>();
 		Thread scanner = new Thread(new Runnable() {
 			@Override
@@ -67,32 +61,18 @@ public class ScanAndBulkPutTest {
 		});
 		scanner.start();
 		
-		// inserter thread
-		Thread inserter = new Thread(new Runnable() {
+		// updater thread
+		Thread updater = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				// update keys
-				for(int i = 0; i < numKeys; ++i) {
-					KeyImpl key = new KeyImpl();
-					key.setKey(padZeros(Integer.toString(i), keyLength));
-					
-					ValueListImpl valueList = new ValueListImpl();
-					ValueImpl value = new ValueImpl();
-					value.setValue("newV");
-					valueList.getValueList().add(value);
-					
-					try {
-						kvbis.update(key, valueList);
-					} catch (Exception e) {
-						throw new RuntimeException(e.getMessage(), e);
-					} 
-				}
+				// update with shorter value so they will not be found
+				updateRange(fromIndex, toIndex, "newV");
 			}
 		});
-		inserter.start();
+		updater.start();
 		
 		try {
-			inserter.join();
+			updater.join();
 			scanner.join();
 		} catch(InterruptedException e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -103,32 +83,20 @@ public class ScanAndBulkPutTest {
 	
 	@Test
 	public void testAtomicScan() {
-		final int offset = 5001;
-		final int numKeys = 10000;
-		final int keyLength = Integer.toString(numKeys).length();
+		final int fromIndex = 5000;
+		final int numKeys = 20000;
+		final int toIndex = fromIndex + numKeys - 1;
 		
-		// insert keys with even number
-		for(int i = offset; i < numKeys + offset; i += 2) {
-			KeyImpl key = new KeyImpl();
-			key.setKey(padZeros(Integer.toString(i), keyLength));
-			
-			ValueListImpl valueList = new ValueListImpl();
-			ValueImpl value = new ValueImpl();
-			value.setValue("youShouldFindThis");
-			valueList.getValueList().add(value);
-			
-			try {
-				kvbis.insert(key, valueList);
-			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage(), e);
-			} 
-		}
+		insertRange(fromIndex, toIndex, "initialValue");
+		
+		// prepare search keys
+		final KeyImpl from = new KeyImpl();
+		from.setKey(padZeros(Integer.toString(fromIndex), keyLength));
+		
+		final KeyImpl to = new KeyImpl();
+		to.setKey(padZeros(Integer.toString(toIndex), keyLength));
 		
 		// start the scan
-		final KeyImpl from = new KeyImpl();
-		from.setKey(padZeros(Integer.toString(offset), keyLength));
-		final KeyImpl to = new KeyImpl();
-		to.setKey(Integer.toString(offset + numKeys));
 		final List<ValueListImpl> scanResult = new ArrayList<ValueListImpl>();
 		Thread scanner = new Thread(new Runnable() {
 			@Override
@@ -142,45 +110,72 @@ public class ScanAndBulkPutTest {
 		});
 		scanner.start();
 		
-		// inserter thread
-		Thread inserter = new Thread(new Runnable() {
+		// give the scanner a chance to start
+		try {
+			Thread.sleep(500);
+		} catch(InterruptedException e) {
+			
+		}
+		
+		// updater thread
+		Thread updater = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				// insert keys with odd number
-				for(int i = offset + 1; i < numKeys + offset; i += 2) {
-					KeyImpl key = new KeyImpl();
-					key.setKey(padZeros(Integer.toString(i), keyLength));
-					
-					ValueListImpl valueList = new ValueListImpl();
-					ValueImpl value = new ValueImpl();
-					value.setValue("youShouldNotFindThis");
-					valueList.getValueList().add(value);
-					
-					try {
-						kvbis.insert(key, valueList);
-					} catch (Exception e) {
-						throw new RuntimeException(e.getMessage(), e);
-					} 
-				}
+				// update with shorter value so they will not be found
+				updateRange(fromIndex, toIndex, "newV");
 			}
 		});
-		inserter.start();
+		updater.start();
 		
 		try {
-			inserter.join();
+			updater.join();
 			scanner.join();
 		} catch(InterruptedException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		
-		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting " + (numKeys / 2), scanResult.size() == (numKeys / 2));
-		for(ValueListImpl valueList : scanResult)
-			Assert.assertEquals("Found unexpected value!", "youShouldFindThis", valueList.getValueList().get(0).getValue());
+		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting " + numKeys, scanResult.size() == numKeys);
 	}
 	
 	@Test
 	public void testBulkPut() {
 		
+	}
+	
+	private void insertRange(int from, int to, String v) {
+		for(int i = from; i <= to; ++i) {
+			KeyImpl key = new KeyImpl();
+			key.setKey(padZeros(Integer.toString(i), keyLength));
+			
+			ValueListImpl valueList = new ValueListImpl();
+			ValueImpl value = new ValueImpl();
+			value.setValue(v);
+			valueList.getValueList().add(value);
+			
+			try {
+				kvbis.insert(key, valueList);
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage(), e);
+			} 
+		}
+	}
+	
+	private void updateRange(int from, int to, String newV) {
+		for(int i = from; i <= to; ++i) {
+			KeyImpl key = new KeyImpl();
+			key.setKey(padZeros(Integer.toString(i), keyLength));
+			
+			ValueListImpl valueList = new ValueListImpl();
+			ValueImpl value = new ValueImpl();
+			value.setValue(newV);
+			valueList.getValueList().add(value);
+			
+			try {
+				kvbis.update(key, valueList);
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage(), e);
+			} 
+		}
 	}
 	
 	private String padZeros(String s, int length) {
