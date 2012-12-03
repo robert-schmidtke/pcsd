@@ -1,5 +1,6 @@
 package test;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ public class AtomicUpdateTest {
 	
 	static HashMap<String, String> testMap = new HashMap<String, String>();
 	static ArrayList<String> keys;
+	
+	static String updatedValue = new String();
+	static String readValue = new String();
 	
 	static boolean testSuccessfull = true;
 	
@@ -92,9 +96,16 @@ public class AtomicUpdateTest {
 			Runnable reader = new ReadThread(randomUpdateKey);
 			Thread readThread = new Thread(reader);
 			readThread.start();
+			
+			try {
+				readThread.join();
+				updateThread.join();
+			} catch(InterruptedException e) {
+				
+			}
 		    		
 		    //if one read failed fail test case
-		    assertTrue("Result", testSuccessfull);
+		    assertEquals("Result", readValue, updatedValue);
 		
 	}
 	
@@ -125,11 +136,8 @@ public class AtomicUpdateTest {
 			valueUpdateList.getValueList().add(value);
 			
 			try {
-				System.out.println("Start updating!");
-	
-				kvbis.update(keyUpdate, valueUpdateList);
-				System.out.println("Hey: " + keyUpdate + " "+randomUpdateValue);
-				
+				kvbis.update(keyUpdate, valueUpdateList);		
+				updatedValue = randomUpdateValue;			
 			} catch (IOException_Exception e) {
 				e.printStackTrace();
 				System.out.println("1");
@@ -159,18 +167,14 @@ public class AtomicUpdateTest {
 				keyRead.setKey(this.key);
 				
 				try {
-					System.out.println("Start reading!");
 					actualValue = kvbis.read(keyRead).getValueList().get(0).getValue().toString();
-					System.out.println("Hey: " + keyRead + " "+actualValue);
+					readValue = actualValue;
 				} catch (IOException_Exception e) {
 					e.printStackTrace();
-					System.out.println("4");
 				} catch (KeyNotFoundException_Exception e) {
 					e.printStackTrace();
-					System.out.println("5");
 				} catch (ServiceNotInitializedException_Exception e) {
 					e.printStackTrace();
-					System.out.println("6");
 				}
 									
 			}	

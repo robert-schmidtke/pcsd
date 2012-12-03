@@ -238,6 +238,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		Lock writeLock = k.getWriteLock();
 		writeLock.lock();
 		try {
+			Thread.sleep(10000);
 			mappingsLock.readLock().lock();
 			SpaceIdent s;
 			try {
@@ -292,6 +293,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 					}
 				}
 			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 			writeLock.unlock();
 		}
