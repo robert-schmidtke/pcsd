@@ -7,7 +7,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -39,7 +38,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	// Mapping of keys to the respective parts of the MMF
 	private Map<KeyImpl, SpaceIdent> mappings = new Hashtable<KeyImpl, SpaceIdent>();
-	
+
 	// Lock on the mappings table
 	private final ReadWriteLock mappingsLock;
 
@@ -124,8 +123,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		try {
 
 			mappingsLock.readLock().lock();
-			boolean containsKey = mappings.containsKey(k);
-			mappingsLock.readLock().unlock();
+			boolean containsKey;
+			try {
+				containsKey = mappings.containsKey(k);
+			} finally {
+				mappingsLock.readLock().unlock();
+			}
 			if (containsKey)
 				throw new KeyAlreadyPresentException(k);
 
@@ -141,10 +144,13 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 			if (ldiff > 0)
 				emptyList.add(new SpaceIdent(space.getPos() + toWrite.length,
 						ldiff));
-			
+
 			mappingsLock.writeLock().lock();
-			mappings.put(k, space);
-			mappingsLock.writeLock().unlock();
+			try {
+				mappings.put(k, space);
+			} finally {
+				mappingsLock.writeLock().unlock();
+			}
 		} finally {
 			writeLock.unlock();
 		}
@@ -163,8 +169,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		writeLock.lock();
 		try {
 			mappingsLock.readLock().lock();
-			SpaceIdent s = mappings.get(k);
-			mappingsLock.readLock().unlock();
+			SpaceIdent s;
+			try {
+				s = mappings.get(k);
+			} finally {
+				mappingsLock.readLock().unlock();
+			}
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -197,8 +207,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		readLock.lock();
 		try {
 			mappingsLock.readLock().lock();
-			SpaceIdent s = mappings.get(k);
-			mappingsLock.readLock().unlock();
+			SpaceIdent s;
+			try {
+				s = mappings.get(k);
+			} finally {
+				mappingsLock.readLock().unlock();
+			}
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -225,8 +239,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		writeLock.lock();
 		try {
 			mappingsLock.readLock().lock();
-			SpaceIdent s = mappings.get(k);
-			mappingsLock.readLock().unlock();
+			SpaceIdent s;
+			try {
+				s = mappings.get(k);
+			} finally {
+				mappingsLock.readLock().unlock();
+			}
 
 			if (s == null) {
 				throw new KeyNotFoundException(k);
@@ -247,8 +265,11 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 					// and store the new value there
 					store.write(s.getPos(), toWrite);
 					mappingsLock.writeLock().lock();
-					mappings.put(k, s);
-					mappingsLock.writeLock().unlock();
+					try {
+						mappings.put(k, s);
+					} finally {
+						mappingsLock.writeLock().unlock();
+					}
 				} else {
 					// or, if the new value fits into the space of the new one
 
@@ -263,8 +284,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 					// adjust the length value in the map
 					mappingsLock.writeLock().lock();
-					mappings.put(k, new SpaceIdent(s.getPos(), toWrite.length));
-					mappingsLock.writeLock().unlock();
+					try {
+						mappings.put(k, new SpaceIdent(s.getPos(),
+								toWrite.length));
+					} finally {
+						mappingsLock.writeLock().unlock();
+					}
 				}
 			}
 		} finally {
@@ -287,8 +312,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 			throw new BeginGreaterThanEndException(begin, end);
 
 		mappingsLock.readLock().lock();
-		ConcurrentSkipListSet<KeyImpl> keys = new ConcurrentSkipListSet<KeyImpl>(mappings.keySet());
-		mappingsLock.readLock().unlock();
+		ConcurrentSkipListSet<KeyImpl> keys;
+		try {
+			keys = new ConcurrentSkipListSet<KeyImpl>(mappings.keySet());
+		} finally {
+			mappingsLock.readLock().unlock();
+		}
 
 		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
 
@@ -310,68 +339,82 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	@Override
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
-		mappingsLock.readLock().lock();
-		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
-		mappingsLock.readLock().unlock();
-		for (KeyImpl ki : keys) {
-			ki.getReadLock().lock();
-		}
-		try {
-			List<ValueListImpl> result = new ArrayList<ValueListImpl>();
+		if (begin.compareTo(end) > 0)
+			throw new BeginGreaterThanEndException(begin, end);
 
-			for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
-				KeyImpl current = i.next();
-				if (begin.compareTo(current) <= 0
-						&& end.compareTo(current) >= 0) {
-					try {
-						result.add(get(current));
-					} catch (KeyNotFoundException e) {
-						e.printStackTrace();
+		mappingsLock.readLock().lock();
+		try {
+			SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+
+			for (KeyImpl ki : keys) {
+				ki.getReadLock().lock();
+			}
+			try {
+				List<ValueListImpl> result = new ArrayList<ValueListImpl>();
+
+				for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
+					KeyImpl current = i.next();
+					if (begin.compareTo(current) <= 0
+							&& end.compareTo(current) >= 0) {
+						try {
+							result.add(get(current));
+						} catch (KeyNotFoundException e) {
+							e.printStackTrace();
+						}
 					}
 				}
+				return result;
+			} finally {
+				for (KeyImpl ki : keys) {
+					ki.getReadLock().unlock();
+				}
 			}
-			return result;
 		} finally {
-			for (KeyImpl ki : keys) {
-				ki.getReadLock().unlock();
-			}
+			mappingsLock.readLock().unlock();
 		}
 	}
 
-	@Override
+	/*
+	 * TODO: test if readLock and writeLock on mappings conflict.
+	 * (non-Javadoc)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
+	 */
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
 			throws IOException {
 		mappingsLock.readLock().lock();
-		SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
-		mappingsLock.readLock().unlock();
-		for (KeyImpl ki : keys) {
-			ki.getWriteLock().lock();
-		}
 		try {
-			for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
-				mappingsLock.readLock().lock();
-				boolean containsKey = mappings.containsKey(p.getKey());
-				mappingsLock.readLock().unlock();
-				if (containsKey) {
-					try {
-						update(p.getKey(), p.getValue());
-					} catch (KeyNotFoundException e) {
-						// This can never ever happen
-						e.printStackTrace();
+			SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
+
+			for (KeyImpl ki : keys) {
+				ki.getWriteLock().lock();
+			}
+			try {
+				for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
+					boolean containsKey = mappings.containsKey(p.getKey());
+					
+					if (containsKey) {
+						try {
+							update(p.getKey(), p.getValue());
+						} catch (KeyNotFoundException e) {
+							// This can never ever happen
+							e.printStackTrace();
+						}
+					} else {
+						try {
+							insert(p.getKey(), p.getValue());
+						} catch (KeyAlreadyPresentException e) {
+							// This can never ever ever ever happen.
+							e.printStackTrace();
+						}
 					}
-				} else {
-					try {
-						insert(p.getKey(), p.getValue());
-					} catch (KeyAlreadyPresentException e) {
-						// This can never ever ever ever happen.
-						e.printStackTrace();
-					}
+				}
+			} finally {
+				for (KeyImpl ki : keys) {
+					ki.getWriteLock().unlock();
 				}
 			}
 		} finally {
-			for (KeyImpl ki : keys) {
-				ki.getWriteLock().unlock();
-			}
+			mappingsLock.readLock().unlock();
 		}
 
 	}
