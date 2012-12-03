@@ -1,6 +1,7 @@
 package dk.diku.pcsd.assignment1.impl;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -46,7 +47,15 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			return;
 		}
 
-		FileReader fr = new FileReader(serverFilename);
+		
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		String filePath;
+		if (tmpDir.endsWith(File.separator))
+			filePath = tmpDir + serverFilename;
+		else
+			filePath = tmpDir + File.separator + serverFilename;
+		
+		FileReader fr = new FileReader(filePath);
 		BufferedReader br = new BufferedReader(fr);
 		
 		HashMap<KeyImpl, ValueListImpl> toInsert = new HashMap<KeyImpl, ValueListImpl>();
