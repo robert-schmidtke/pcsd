@@ -329,7 +329,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				try {
 					result.add(get(current));
 				} catch (KeyNotFoundException e) {
-					e.printStackTrace();
+					// scan is not atomic so this may happen - just carry on
 				}
 			}
 		}
