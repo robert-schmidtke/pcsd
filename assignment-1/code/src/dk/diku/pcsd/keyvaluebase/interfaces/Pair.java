@@ -1,11 +1,16 @@
 package dk.diku.pcsd.keyvaluebase.interfaces;
 
+import javax.xml.bind.annotation.XmlSeeAlso;
+
+import dk.diku.pcsd.assignment1.impl.PairImpl;
+
+@XmlSeeAlso({PairImpl.class})
 public class Pair<K, V> {
-	private K k;
-	private V v;
+	protected K k;
+	protected V v;
 	
 	@SuppressWarnings("unused")
-	private Pair()
+	public Pair()
 	{
 	}
 	

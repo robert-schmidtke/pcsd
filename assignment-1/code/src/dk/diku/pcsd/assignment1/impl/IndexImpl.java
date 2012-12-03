@@ -375,13 +375,15 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	}
 
 	/*
-	 * TODO: test if readLock and writeLock on mappings conflict.
+	 * TODO: writeLock throughout is probably not necessary,
+	 * but just a readLock throughout causes a deadlock
+	 * and i think we need some kind of lock throughout. yes we do.
 	 * (non-Javadoc)
 	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
 	 */
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
 			throws IOException {
-		mappingsLock.readLock().lock();
+		mappingsLock.writeLock().lock();
 		try {
 			SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
 
@@ -414,7 +416,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 				}
 			}
 		} finally {
-			mappingsLock.readLock().unlock();
+			mappingsLock.writeLock().unlock();
 		}
 
 	}
