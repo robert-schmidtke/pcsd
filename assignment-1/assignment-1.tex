@@ -43,7 +43,12 @@
 \subsection*{Question 1}
 \label{sec:eq1}
 \subsubsection*{(a)}
-TODO
+Our abstraction would have one central component which receives all read/write requests from the clients and translates them into one or several requests for the individual machines, waits for the result, combines the results if necessary and sends it back to the clients. All information concerning the abstraction would be kept in this component; neither the clients nor the individual machines have to know that there is any abstraction at all. We could translate adresses by assigning an offset to each of the storage machines: the first machine would have the offset zero, and the $n$th machine would have the offset $offset(n-1) + storageSize(n-1)$. Computing the ID of the machine and the physical memory address from an address in the global address space would then mean finding the two offsets between which the address lies and subtracting the lower offset from it.
+This can be simplified if all storage machines provide the same amount of storage and the size of this storage is a power of two; in this case the first few bits of the global address will be the ID of the machine, and the following bits denote the physical adress, so that only two simple bitwise operations are necessary.
+
+The central component would also have to regularly check if all machines are still online, and inform clients when their requests cannot be fulfilled because a machine needed for their completion cannot be reached. 
+
+In this scenario, all traffic has to pass the central component for every transaction, so this component is an obvious bottleneck. It would therefore be a good idea to have several instances of this central component. Each could work on its own, so there are no synchronization issues. A load balancer could be used to make sure that all such components are used equally. In this case, the storage should scale very well since more manager components can be added at will. With only one such component, however, the whole storage's performance is would be limited by the central component and would not scale at all after this point.
 \subsubsection*{(b)}
 TODO
 (b) Show the pseudocode and API of the READ and WRITE functions of your memory abstraction.
@@ -107,10 +112,16 @@ Caching is a perfect example for fast path optimization. It means that, in addit
 \label{sec:eq4}
 
 \subsubsection*{(a)}
-Typical caches use two properties to decide which parts of the memory to keep in the cache: temporal locality and spatial locality. This means that data is cached if a) it has been requested in the (recent) past or b) it is physically close to data that has already been requested. Therefore we would need to write a test program that selects an area in memory that fits into the cache and repeatedly accesses random parts of this area for some time before starting the measurement. Then it should first save the current time and then read parts of the memory in the selected area that amount to a certain size. We might either choose to read many small parts of said memory, if we want to concentrate on measuring the latency for a single cache access, or few large parts if we care about the actual bandwidth. We then check how much time has passed and return the result in bytes per second.
+Typical caches use two properties to decide which parts of the memory to keep in the cache: temporal locality and spatial locality. This means that data is cached if a) it has been requested in the (recent) past or b) it is physically close to data that has already been requested. Therefore we would need to write a test program that selects an area in memory that fits into the cache and repeatedly accesses parts of this area for some time before starting the measurement. We expect that this area would then be cached, and that all subsequent operations in this area would be cache hits.
+
+Then there are several things we could to to actually measure the memory bandwidth. We could copy data from one part of the memory to another part. If we want to measure the raw bandwith, we would typically copy large chunks of memory and measure how long this takes. We could use the same setup to measure if the performance differs between reads and writes, for example by writing zeroes all over the cached memory area, with no reads at all. Another metric we could measure is cache access latency: here we would only move small chunks of data, but many of them, so that the (variable) time needed for actually moving the data becomes less important than the (static) time needed for requesting and responding.
+
+In all cases, we have to make sure that our program is the only one using the machine at the time of the experiment. Since we are basically doing some brainless copying, we also have to make sure that our compiler (or VM) does not optimize any operations away.
 
 \subsubsection*{(b)}
-TODO
+To ensure that all our operations miss the cache, we can do something similar to the procedure described above. Again, we start out by repeatedly reading a certain area in memory, expecting that it will be cached. This time, however, we are doing this to ensure that other areas in the memory are not cached, thus the memory area we access must be big enough to actually fill all or at least most of the cache. In all operations during the actual measurement, we would then use parts of the memory that are \emph{outside} this area. While doing this, the cache will be refilled with the data we access during the measurement, so we also need to make sure that we do not access the same area several times, or even an area right after an area that we accessed before.
+
+Although we are deliberately accessing data that has not been used in some time, we still want to make sure that this data actually resides in main memory and has not been swapped to a disk, since any disk access would mean that we also measure time that has nothing to do with moving data from the memory to the CPU and back. We must therefore make sure that our overall RAM usage does not exceed the amount of RAM that is available on our machine.
 
 \section*{Programming Task}
 \label{sec:programming}
@@ -168,8 +179,8 @@ Marco
 \label{sec:pq9}
 Out implementation of \texttt{atomicScan} differs from the normal \texttt{scan} only in one way. At the start of the function, we first acquire a read lock on the key-to-space-map, then we get read locks for all keys that are currently in the map. We do this in order, from the smallest key to the largest, in order to avoid deadlocks. Once we have all the locks, we execute the scan, i.e. we iterate through all keys, check if they are in the specified range, and return a list of those that are. The evaluation of the predicate is implemented in KeyValueBaseImpl (as opposed to the rest, which is in IndexImpl) and is identical to that of regular scan. Finally, we release the locks on all the keys and subsequently the lock on the map.
 
-TODO bulkPut
-
+For \texttt{bulkPut}, our approach is very similar. Here we get a write lock for the key-to-space-map and subsequently for all keys that are currently in the map. Then we iterate through the supplied data, check if a given key is already present in the store and choose whether to insert or update. At the end, we release all locks on keys and finally the lock on the map. This is not optimal, since we actually only need read locks on the map and the keys during most of the procedure: write locks are needed only for the keys whose values are changed and only when they are changed. The same is true for the mapping. However, Java's ReadWriteLock does not allow the user to upgrade a read lock to a write lock. We would therefore have to release our read locks and request a write lock before every write. This is obviously unacceptable, since it may destroy the atomicity of bulkPut. Therefore we had to use write locks throughout, even though this obviously means that no other operations can be executed during a bulkPut.
+ 
 \begin{thebibliography}{1}
 
 \bibitem[Schroeder2007]{Schroeder2007} Bianca Schroeder and Garth A. Gibson. 2007. Disk failures in the real world: what does an MTTF of 1,000,000 hours mean to you?. In Proceedings of the 5th USENIX conference on File and Storage Technologies Schroeder2007(FAST '07). USENIX Association, Berkeley, CA, USA, , Article 1 .
