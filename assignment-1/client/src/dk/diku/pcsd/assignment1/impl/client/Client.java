@@ -1,5 +1,9 @@
 package dk.diku.pcsd.assignment1.impl.client;
 
+import javax.xml.ws.BindingProvider;
+
+import com.sun.xml.internal.ws.client.BindingProviderProperties;
+
 import dk.diku.pcsd.assignment1.impl.KeyImpl;
 import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplService;
 import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplServiceService;
@@ -12,8 +16,11 @@ public class Client {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		int timeout = 43200000; // 12h
 		KeyValueBaseImplServiceService kvbiss = new KeyValueBaseImplServiceService();
 		KeyValueBaseImplService kvbis = kvbiss.getKeyValueBaseImplServicePort();
+		((BindingProvider) kvbis).getRequestContext().put(BindingProviderProperties.CONNECT_TIMEOUT, timeout);
+		((BindingProvider) kvbis).getRequestContext().put(BindingProviderProperties.REQUEST_TIMEOUT, timeout);
 		
 		KeyImpl key = new KeyImpl();
 		key.setKey("testKey");
