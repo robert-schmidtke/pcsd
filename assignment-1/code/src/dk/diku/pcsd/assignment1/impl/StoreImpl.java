@@ -12,7 +12,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 public class StoreImpl implements Store {
 	
 	// size of the file if it does not exist already
-	private static final long MMF_INITIAL_SIZE = 1048576; // 1MB
+	private static final long MMF_INITIAL_SIZE = 25769803776L; // 24GB
 	
 	// the actual file
 	private final RandomAccessFile mmfRandomAccessFile;
@@ -43,9 +43,11 @@ public class StoreImpl implements Store {
 				mmfRandomAccessFile = new RandomAccessFile(mmfFile, "rw");
 			else {
 				// create if necessary
-				if(mmfFile.getParentFile().mkdirs() & mmfFile.createNewFile()) {
+				mmfFile.getParentFile().mkdirs();
+				if(mmfFile.createNewFile()) {
 					mmfRandomAccessFile = new RandomAccessFile(mmfFile, "rw");
-					mmfRandomAccessFile.setLength(MMF_INITIAL_SIZE);
+					mmfRandomAccessFile.seek(MMF_INITIAL_SIZE - 1);
+					mmfRandomAccessFile.write(0);
 				} else
 					throw new RuntimeException("Could not create " + mmfPath);
 			}
