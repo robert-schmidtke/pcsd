@@ -2,7 +2,7 @@ package dk.diku.pcsd.assignment1.impl;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
-public class PairImpl extends Pair<KeyImpl, ValueListImpl>{
+public class PairImpl extends Pair<KeyImpl, ValueListImpl> {
 
 	public PairImpl(){
 		super();
@@ -27,8 +27,14 @@ public class PairImpl extends Pair<KeyImpl, ValueListImpl>{
 	
 	@Override
 	public ValueListImpl getValue() {
-		// TODO Auto-generated method stub
 		return super.getValue();
 	}
+
+	@Override
+	public int compareTo(Pair<KeyImpl, ValueListImpl> o) {
+		return k.compareTo(o.getKey());
+	}
+
+	
 
 }

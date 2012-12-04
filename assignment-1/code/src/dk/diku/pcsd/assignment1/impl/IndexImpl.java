@@ -375,48 +375,38 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	}
 
 	/*
-	 * TODO: writeLock throughout is probably not necessary,
-	 * but just a readLock throughout causes a deadlock
-	 * and i think we need some kind of lock throughout. yes we do.
-	 * (non-Javadoc)
+	 * TODO: writeLock throughout is probably not necessary, but just a readLock
+	 * throughout causes a deadlock and i think we need some kind of lock
+	 * throughout. yes we do. (non-Javadoc)
+	 * 
 	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
 	 */
-	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newKeys)
+	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newPairs)
 			throws IOException {
-		mappingsLock.writeLock().lock();
-		try {
-			SortedSet<KeyImpl> keys = new TreeSet<KeyImpl>(mappings.keySet());
 
-			for (KeyImpl ki : keys) {
-				ki.getWriteLock().lock();
-			}
-			try {
-				for (Pair<KeyImpl, ValueListImpl> p : newKeys) {
+		SortedSet<Pair<KeyImpl, ValueListImpl>> pairs = new TreeSet<Pair<KeyImpl, ValueListImpl>>(
+				newPairs);
+
+		for (Pair<KeyImpl, ValueListImpl> p : pairs) {
+			p.getKey().getWriteLock().lock();
+		}
+		try {
+			for (Pair<KeyImpl, ValueListImpl> p : newPairs) {
+				try{
 					boolean containsKey = mappings.containsKey(p.getKey());
-					
-					if (containsKey) {
-						try {
-							update(p.getKey(), p.getValue());
-						} catch (KeyNotFoundException e) {
-							// This can never ever happen
-							e.printStackTrace();
-						}
-					} else {
-						try {
-							insert(p.getKey(), p.getValue());
-						} catch (KeyAlreadyPresentException e) {
-							// This can never ever ever ever happen.
-							e.printStackTrace();
-						}
-					}
-				}
-			} finally {
-				for (KeyImpl ki : keys) {
-					ki.getWriteLock().unlock();
+
+					if (containsKey) 
+						update(p.getKey(), p.getValue());
+					else 
+						insert(p.getKey(), p.getValue());
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		} finally {
-			mappingsLock.writeLock().unlock();
+			for (Pair<KeyImpl, ValueListImpl> p : pairs) {
+				p.getKey().getWriteLock().unlock();
+			}
 		}
 
 	}
