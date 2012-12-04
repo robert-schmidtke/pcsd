@@ -85,6 +85,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 			if (result != null) {
 				emptyList.remove(result);
+				int ldiff = result.getLength() - length;
+				if (ldiff > 0){
+					SpaceIdent empty = new SpaceIdent(result.getPos()+length, ldiff);
+					result.setLength(length);
+					freeSpace(empty);
+				}
 				return result;
 			}
 
@@ -138,12 +144,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 			store.write(space.getPos(), toWrite);
 
-			// and add new empty area to list if necessary
-			int ldiff = space.getLength() - toWrite.length;
-
-			if (ldiff > 0)
-				emptyList.add(new SpaceIdent(space.getPos() + toWrite.length,
-						ldiff));
 
 			mappingsLock.writeLock().lock();
 			try {
