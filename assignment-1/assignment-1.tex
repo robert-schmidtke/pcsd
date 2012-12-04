@@ -279,10 +279,17 @@ Vossi
 
 \subsection*{Question 5}
 \label{sec:pq5}
-Robert
+  As described in section~\ref{sec:pq4} with an increasing number of clients we expect increasing latency and decreasing throughput. For this to be measurable we need to be more clear on the setup and the terminology.
+  
+  The service needs to be tested with different amounts of parallel requests sent to it. Therefore it is necessary to keep track of the number of clients currently accessing the service and parallel as well as the performance measures for the current number of clients. That is, different phases have to be executed, each with an increasing (but fixed during the phase) number of parallel requests. To make the partial results comparable the starting conditions for each phase must be the same so it is advisable to re-initialize the service after each phase is over (unless only read operations are performed since they have no effect on the memory and the memory management of the service).
+  
+  Keeping track of the performance measures is done on client-basis. That is, each client keeps track of two things: the time between sending the request and receiving a response (we will use that time as latency) and the overall number of requests sent / responses received per second (we will use this number as throughput). To ensure that every request will be answered a rather large timeout has to be employed since, as described above, the number of clients is expected the increase latency. We then have measures per client that can be averaged over the total number of clients that participated during a specific phase, that is we can have latency (time to response) per client and throughput (responses per second) per client.
+  
+  Since the number of clients is increased with each phase and the performance metrics are measured per client we should see a change of these metrics over the number of clients. If we only have one client that operates in isolation with no other clients running and requesting in parallel we should find a very low latency (per client) and a high throughput (per client). However when increasing the number of clients we expect the latency per client to increase and the throughput per client to decrease since they operate in an environment of many other clients making requests in parallel.
 
 \subsection*{Question 6}
 \label{sec:pq6}
+The kind of operations performed highly influence these two performance measures: for write operations, not only the number of parallel requests can decrease throughput but also blocking of operations because of locking. Therefore we will concern ourselves only with read operations to make sure that performance decrease is only due to the increasing number of clients and not the application logic (locking).
 Vossi
 
 data set used is\footnote{Downloaded from: \url{http://an.kaist.ac.kr/~haewoon/release/twitter_social_graph/} [last accessed on: November 30, 2012]}
