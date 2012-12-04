@@ -12,7 +12,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 public class StoreImpl implements Store {
 	
 	// size of the file
-	private static final long MMF_SIZE = 25769803776L; // 24GB
+	private static final long MMF_SIZE = 34359738368L; // 32GB
 	
 	// the actual file
 	private final RandomAccessFile mmfRandomAccessFile;
@@ -48,7 +48,7 @@ public class StoreImpl implements Store {
 			mmfRandomAccessFile.setLength(MMF_SIZE);
 			
 			// initialize the memory mapped file with either the old file or the newly created one
-			mmf = new MemoryMappedFile(mmfRandomAccessFile.getChannel(), FileChannel.MapMode.READ_WRITE, 0, mmfRandomAccessFile.length());
+			mmf = new MemoryMappedFile(mmfRandomAccessFile.getChannel(), FileChannel.MapMode.READ_WRITE, 0, MMF_SIZE);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
