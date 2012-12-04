@@ -19,6 +19,7 @@
 \usepackage{hyperref}
 \usepackage{threeparttable}
 \usepackage{footnote}
+\usepackage{listings}
 \makesavenoteenv{tabular}
 
 \lhead{\textbf{\Module}}
@@ -43,28 +44,135 @@
 \subsection*{Question 1}
 \label{sec:eq1}
 \subsubsection*{(a)}
-Our abstraction would have one central component which receives all read/write requests from the clients and translates them into one or several requests for the individual machines, waits for the result, combines the results if necessary and sends it back to the clients. All information concerning the abstraction would be kept in this component; neither the clients nor the individual machines have to know that there is any abstraction at all. We could translate adresses by assigning an offset to each of the storage machines: the first machine would have the offset zero, and the $n$th machine would have the offset $offset(n-1) + storageSize(n-1)$. Computing the ID of the machine and the physical memory address from an address in the global address space would then mean finding the two offsets between which the address lies and subtracting the lower offset from it.
-This can be simplified if all storage machines provide the same amount of storage and the size of this storage is a power of two; in this case the first few bits of the global address will be the ID of the machine, and the following bits denote the physical adress, so that only two simple bitwise operations are necessary.
+Our abstraction would have one central component which receives all read/write requests from the clients and translates them into one or several requests (if the area that should be read or written to is distributed over several machines) for the individual machines, waits for the result, combines the results if necessary and sends it back to the clients. All information concerning the abstraction would be kept in this component; neither the clients nor the individual machines have to know that there is any abstraction at all. We could translate adresses by assigning an offset to each of the storage machines: the first machine would have the offset zero, and the $n$th machine would have the offset $offset(n-1) + storageSize(n-1)$. Computing the ID of the machine and the physical memory address from an address in the global address space would then mean finding the two offsets between which the address lies and subtracting the lower offset from it.
+We do not actually have many other choices for the translation of storage addresses, since we need to provide a continuous address space.
+However, the translation can be simplified if all storage machines provide the same amount of storage and the size of this storage is a power of two; in this case the first few bits of the global address will be the ID of the machine, and the following bits denote the physical adress, so that only two simple bitwise operations are necessary.
 
 The central component would also have to regularly check if all machines are still online, and inform clients when their requests cannot be fulfilled because a machine needed for their completion cannot be reached. 
 
 In this scenario, all traffic has to pass the central component for every transaction, so this component is an obvious bottleneck. It would therefore be a good idea to have several instances of this central component. Each could work on its own, so there are no synchronization issues. A load balancer could be used to make sure that all such components are used equally. In this case, the storage should scale very well since more manager components can be added at will. With only one such component, however, the whole storage's performance is would be limited by the central component and would not scale at all after this point.
 \subsubsection*{(b)}
-TODO
-(b) Show the pseudocode and API of the READ and WRITE functions of your memory abstraction.
-Note that your pseudocode should show both translation of addresses (naming) as well as
-communicate with individual machines to obtain the actual data. (for each function: API + 1-2
-sentence description of API + pseudocode)
 \begin{itemize}
-  \item \texttt{getStorageAttributes()}
-  \item \texttt{getOffsets()}
-  \item \texttt{read(long offset, int length)}
-  \item \texttt{write(long offset, byte[] data)}
+  \item \texttt{getStorageAttributes()} would tell the clients basic information about the memory, like size and the current status (e.g. online, offline, storage server down). It would take no arguments and return a data structure containing the information.
+  
+  \begin{lstlisting}[basicstyle=\footnotesize]
+  getStorageAttributes(){
+      return {Size: this.size,
+              Status : this.status};
+  }
+  \end{lstlisting}
+  \item \texttt{read(long address, int length)} takes the adress from which the client wants to read and the length of the segment that should be read in bytes. It returns an array of bytes of the specified length if everything succeeds, otherwise it returns an exception.
+  \begin{lstlisting}[basicstyle=\footnotesize]
+  read(long address, int length){
+      if (address + length > STORAGE_SIZE)
+          throw new InvalidArgumentException();
+  
+      // find the correct storage machine
+      Long offset;
+      Integer segmentLength;
+      Long nextOffset;
+      Integer machineID;
+      
+      for (i = 0; i < servers.length; i++) {
+          if (address >= servers[i].getOffset()
+              && address <= servers[i+1].getOffset()){
+              offset = servers[i].getOffset();
+              segmentLength = servers[i].getLength();
+              nextOffset = servers[i+1].getOffset();
+              machineID = servers[i].getMachineID();
+              break;
+          }
+      }
+      
+      // read data from storage
+      Address serverAddress = mappings.get(machineID);
+      
+      // check if segment reaches into next machine's space
+      Long end = address + length;
+      Long overlap = end - nextOffset;
+      Int readLength = length;
+      
+      if (overlap > 0)
+          readLength -= overlap;
+      
+      sendReadRequest(serverAddress, length);
+      
+      response = waitForResponse (TIMEOUT);
+      if (response == null)
+          trow new TimeoutException();
+      if (response.success){
+          if (overlap < 0)
+              return concat (response.getData(),
+                            read(nextOffset, overlap));
+          else
+              return response.getData();
+      }else{
+          throw response.getException();
+      }
+  }
+  \end{lstlisting}
+  
+  For the simplified translation method where all storage machines have the same capacity, the address translation could look like this:
+  \begin{lstlisting}[basicstyle=\footnotesize]
+  read(long address, int length){ 
+      ...
+      // find the correct storage machine     
+      Integer machineID = address / SERVER_CAPACITY;
+      Address serverAddress = mappings.get(machineID);
+      
+      Long nextOffset = (machineID+1) * SERVER_CAPACITY;
+      
+      // read data from storage
+      ...
+  }
+  \end{lstlisting}
+  
+  \item \texttt{write(long address, byte[] data)} takes the address that should be written to and the data that should be written. It would not return anything unless a problem occurs, in which case it would throw an appropriate exception. Since the translation of addresses is the same as in read, we will only include the simplified version here.
+  
+  \begin{lstlisting}[basicstyle=\footnotesize]
+  write(long address, byte[] data){
+      Integer length = data.length;
+      if (address + length > STORAGE_SIZE)
+          throw new InvalidArgumentException();
+          
+      // find the correct storage machine     
+      Integer machineID = address / SERVER_CAPACITY;
+      Address serverAddress = mappings.get(machineID);
+      
+      Long nextOffset = (machineID+1) * SERVER_CAPACITY;
+      
+      // write data to storage
+      Address serverAddress = mappings.get(machineID);
+      
+      // check if segment reaches into next machine's space
+      Long end = address + length;
+      Long overlap = end - nextOffset;
+      Int writeLength = length;
+      byte[] writeData = data;
+      
+      if (overlap > 0){
+          writeLength -= overlap;
+          writeData = data.subArray(0, writeLength);
+      }
+      
+      sendWriteRequest(serverAddress, writeData);
+      
+      response = waitForResponse (TIMEOUT);
+      if (response == null)
+          trow new TimeoutException();
+      if (response.success){
+          if (overlap < 0)
+              write (nextOffset, data.subArray(writeLength, length));
+      }else{
+          throw response.getException();
+      }
+  }
+  \end{lstlisting}
 \end{itemize}
 
 
 \subsubsection*{(c)}
-Simple operations against main memory are TODO atomic. For our memory abstraction, we would definitely make basic operations non-atomic (unless we know for certain that it will only ever be used for purposes that require atomicity). Guaranteeing atomicity always comes with a performance cost, and a basic component like memory should offer the possibility to read and write as fast as possible for cases where atomicity is not needed. It is always possible to make wrappers for existing functions that do guarantee atomicity (simply by implementing read and write locks for parts of the memory, e.g. a lock for every page), whereas it is not possible to get rid of the overhead if atomicity is implemented in the memory (abstraction) itself.
+We would definitely make basic operations non-atomic (unless we know for certain that our memory abstraction will only ever be used for purposes that always require atomicity). Guaranteeing atomicity always comes with a performance cost, and a basic component like memory should offer the possibility to read and write as fast as possible for cases where atomicity is not needed. It is always possible to make wrappers for existing functions that do guarantee atomicity, whereas it is not possible to get rid of the overhead if atomicity is implemented in the memory (abstraction) itself. If one wanted to create atomic functions on top of the provided ones, one could simply create read-write-locks for every unit of memory (e.g. for every page) and lock or unlock those before and after every read or write.
 
 \subsection*{Question 2}
 \label{sec:eq2}
@@ -133,9 +241,11 @@ There are basically three types of semantics: 'Exactly once', 'at most once' and
 \subsection*{Question 2}
 \label{sec:pq2}
 
-We do all memory management and locking and most of the store's logic in IndexImpl, which is a singleton. The current key-value-pairs are managed in a Hashtable, which maps keys to a SpaceIdent object, which in turn contains a value's position and length in the memory mapped file. We also have a list of SpaceIdents which specify all empty areas in the store, i.e. areas that may be overwritten and used by new values. Space is declared to be free when a value is deleted, or when it is updated with a value which does not fit into the currently allocated space. In the latter case, the old space is marked as free and a new free area is found which is large enough to contain the new value. If no such place is found in the emptyList, the new value is spaced at the end of the currently used space. The same happens with inserts. The emptyList is sorted by the SpaceIdent's location. In order to avoid fragmentation of the store, adjacent free areas are joined every time free space is requested (since this requires a traversal of the emptyList anyway). The actual memory mapped file is stored in a subdirectory of the temporary path denoted by the Java environment variable 'java.io.tmpdir', which may be configured in the application server the service is deployed in. The subdirectory is 'dk/diku/pcsd/assignment1/impl/' and the 24GB file to be created will be called 'store.mmf'.
+We do all memory management and locking and most of the store's logic in IndexImpl, which is a singleton. The current key-value-pairs are managed in a Hashtable, which maps keys to a SpaceIdent object, which in turn contains a value's position and length in the memory mapped file. We also have a list of SpaceIdents which specify all empty areas in the store, i.e. areas that may be overwritten and used by new values. Space is declared to be free when a value is deleted, or when it is updated with a value which does not fit into the currently allocated space. In the latter case, the old space is marked as free and a new free area is found which is large enough to contain the new value. If no such place is found in the emptyList, the new value is spaced at the end of the currently used space. The same happens with inserts. The emptyList is sorted by the SpaceIdent's location. In order to avoid fragmentation of the store, adjacent free areas are joined every time free space is requested (since this requires a traversal of the emptyList anyway). The actual memory mapped file is stored in a subdirectory of the temporary path denoted by the Java environment variable 'java.io.tmpdir', which may be configured in the application server the service is deployed in. The subdirectory is 'dk/diku/pcsd/assignment1/impl/' and the 24GB file to be created is called 'store.mmf'.
 
-We use Java's ReadWriteLock API for locking. The KeyImpl class manages another Hashtable which maps each key to its own ReadWriteLock object, so that each key can be locked on its own and we can distinguish between read and write access. We hope that this granular locking will result in maximal concurrency and therefore maximal performance for our store. When inserting new completely new keys, which do not have a lock yet, we use Java's \texttt{synchronized} on the new key to avoid creating duplicate locks for the same key. In all cases, we acquire all necessary locks at the start of a method and release them again at the end (Conservative Strict 2PL), because we did not want to deal with deadlocks or cascading aborts. For tasks larger than a single key, e.g. atomicScan, we simply acquire the locks for all keys in the order of the keys, while also locking the mapping itself, so that no new keys can be inserted during the operation.
+We use Java's ReadWriteLock API for locking. The KeyImpl class manages another Hashtable which maps each key to its own ReadWriteLock object, so that each key can be locked on its own and we can distinguish between read and write access. We hope that this granular locking will result in maximal concurrency and therefore maximal performance for our store. When inserting new completely new keys, which do not have a lock yet, we use Java's \texttt{synchronized} on the new key to avoid creating duplicate locks for the same key. In all cases, we acquire all necessary locks at the start of a method and release them again at the end (Conservative Strict 2PL), because we did not want to deal with deadlocks or cascading aborts. 
+
+Internally, we also lock the emptyList whenever we allocate new space or free existing space, so that we can make sure that no area of empty space is allocated to two keys at the same time. Since all functions that use the emptyList both read and write, we do not need to distinguish between read and write access here, so we can again use \texttt{synchronized} instead of the more complicated ReadWriteLock.
 
 \subsection*{Question 3}
 \label{sec:pq3}
