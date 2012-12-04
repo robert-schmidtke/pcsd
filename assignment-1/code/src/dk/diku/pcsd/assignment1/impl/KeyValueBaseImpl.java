@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,41 +39,39 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		if (initializing)
 			throw new ServiceInitializingException();
 		initializing = true;
-		
-		if(serverFilename == null) {
+
+		if (serverFilename == null) {
 			initialized = true;
 			initializing = false;
 			return;
 		}
 
-		
 		String tmpDir = System.getProperty("java.io.tmpdir");
 		String filePath;
 		if (tmpDir.endsWith(File.separator))
 			filePath = tmpDir + serverFilename;
 		else
 			filePath = tmpDir + File.separator + serverFilename;
-		
+
 		FileReader fr = new FileReader(filePath);
 		BufferedReader br = new BufferedReader(fr);
-		
-		HashMap<KeyImpl, ValueListImpl> toInsert = new HashMap<KeyImpl, ValueListImpl>();
 
+		
 		String current;
 		try {
 			current = br.readLine();
 			String currentKey = null;
 			ValueListImpl currentValues = null;
 			while (current != null) {
-				
+
 				String[] values = current.split("\\s", 2);
-				
+
 				if (values.length > 1) {
 					String key = values[0];
 					if (!key.equals(currentKey)) {
 
 						if (currentKey != null) {
-							toInsert.put(new KeyImpl(currentKey), currentValues);
+							index.insert(new KeyImpl(currentKey), currentValues);
 						}
 
 						currentKey = key;
@@ -88,30 +85,21 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 
 				current = br.readLine();
 			}
-			
+
 			if (currentKey != null) {
-				toInsert.put(new KeyImpl(currentKey), currentValues);
+				index.insert(new KeyImpl(currentKey), currentValues);
 			}
-			
+
 			br.close();
-			
+
 			initialized = true;
-			
-			for (KeyImpl k : toInsert.keySet()){
-				try {
-					insert(k, toInsert.get(k));
-				} catch (KeyAlreadyPresentException e) {
-					// This can never happen
-					e.printStackTrace();
-				} catch (ServiceNotInitializedException e) {
-					// Neither can this
-					e.printStackTrace();
-				}
-			}
 			initializing = false;
 		} catch (IOException e) {
 			// Throw a FileNotFoundException instead.
 			throw new FileNotFoundException(e.getMessage());
+		} catch (KeyAlreadyPresentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
