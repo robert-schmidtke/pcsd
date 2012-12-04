@@ -157,7 +157,12 @@ Vossi
 
 \subsection*{Question 4}
 \label{sec:pq4}
-Robert
+\begin{itemize}
+  \item number of clients: The number of clients that perform requests in parallel definitely affects the performance of our service: Tests have showed that when running a couple of thousand clients in parallel and have them make requests, some of their requests time out because the server is too busy and cannot respond in time (higher latency). Each request then takes longer and longer because the computing resources of the server need to be shared and for certain ACID-enforced operations the locking mechanism blocks more and more parallel requests (lower throughput). This is due to the fact that the store and the index are singletons in our setup and therefore form the bottleneck since every request eventually has to go through the single index and store instances.
+  \item hardware characteristics: Up to a certain extend the hardware characteristics influence the performance of the service, but as described above the bottleneck lies in the architecture of the service and not in lacking computing power. Of course, having a multi-core machine with sufficient memory and disk space to accomodate the Twitter data set is necessary, but adding cores or RAM at the point where thousands of parallel requests come in does not help any more.
+  \item size of dataset managed: The performance of the service largely depends on the number of keys rather than the number of values managed since we maintain a mapping from keys to positions in the memory mapped file. So with a massively increasing number of keys we may encounter longer lookup times in the index, but since it is a Hashtable these increases should barely be noticable. If we are unlucky and perform frequent update operations that update values with slightly smaller values then we may encounter the problem of fragmentation since we would have many small areas of free memory that had previously been filled with the slightly larger values.
+  \item mix of operations: If we intersperse read, insert, update and delete operations equally we have the situation that most of these operations actually require a write lock which blocks all the other operations. So parallel read operations should be considerably faster than parallel read and write operations.
+\end{itemize}
 
 \subsection*{Question 5}
 \label{sec:pq5}
