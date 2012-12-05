@@ -53,6 +53,17 @@ public class LoadReadExperiment {
 		//how many reads per thread
 		int n = 100;
 		
+		//get Zipf keys
+		int COUNT = 10856;
+		//int COUNT = 61578403; //highest key -11
+		float theta = (float) 0.8;
+		ZipfGenerator zg = new ZipfGenerator(COUNT, theta);
+		Random rnd = new Random();
+		
+		List<Long> zipfs = new ArrayList<Long>();
+		for(int i = 0; i < n; ++i)
+			zipfs.add(zg.calculateZipf(rnd.nextDouble()));
+		
 		//iterate over different thread numbers
 		for (int j = 0; j < numOfThreads.length; j++){
 			//get the current number of threads
@@ -67,7 +78,7 @@ public class LoadReadExperiment {
 			try {
 				List<Callable<Long>> threadList = new ArrayList<Callable<Long>>();
 				for(int i = 0; i < h; i++)
-					threadList.add(new ReadThread(n));
+					threadList.add(new ReadThread(zipfs));
 				results = executor.invokeAll(threadList);
 				
 				for (Future<Long> result : results) {
@@ -85,25 +96,18 @@ public class LoadReadExperiment {
 	}
 	
 	public static class ReadThread implements Callable<Long> {
-		int n;
-		ReadThread(int n) {
-			  this.n = n;
+		List<Long> zipfs;
+		ReadThread(List<Long> zipfs) {
+			  this.zipfs = zipfs;
 		}
 		
 		public Long call() {
-			//get Zipf keys
-			int COUNT = 10856;
-			//int COUNT = 61578403; //highest key -11
-			float theta = (float) 0.8;
-			ZipfGenerator zg = new ZipfGenerator(COUNT, theta);
-			Random rnd = new Random();
 			
 			long threadSum = 0;
 
-			for (int i=0;i<this.n;i++){
+			for (int i=0;i<zipfs.size();i++){
 				//get key
-				double u = rnd.nextDouble();
-		        long rank = zg.calculateZipf(u);
+		        long rank = zipfs.get(i);
 		        
 		        KeyImpl key = new KeyImpl();
 				key.setKey(Long.toString(rank+11));//+11 to avoid having a large number of miss hits
@@ -124,7 +128,7 @@ public class LoadReadExperiment {
 			}
 
 			//write measurement
-			return threadSum/n;
+			return threadSum/zipfs.size();
 			
 		}
 	} 
