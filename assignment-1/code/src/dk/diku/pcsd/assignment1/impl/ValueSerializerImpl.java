@@ -74,8 +74,6 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 		// check for the most common first
 		if(value instanceof Integer)
 			return 4 + 1;
-		if(value instanceof Long)
-			return 8 + 1;
 		if(value instanceof String)
 			return ((String) value).getBytes().length + 1 + 4; // + length field
 		
@@ -88,6 +86,8 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 			return 2 + 1;
 		if(value instanceof Short)
 			return 2 + 1;
+		if(value instanceof Long)
+			return 8 + 1;
 		if(value instanceof Float)
 			return 4 + 1;
 		if(value instanceof Double)
@@ -102,8 +102,6 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 		// check for the most common first
 		if(value instanceof Integer)
 			dst.put(TYPE_INTEGER).putInt((Integer) value);
-		else if(value instanceof Long)
-			dst.put(TYPE_LONG).putLong((Long) value);
 		else if(value instanceof String) {
 			byte[] bytes = ((String) value).getBytes();
 			dst.put(TYPE_STRING).putInt(bytes.length).put(bytes);
@@ -118,6 +116,8 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 			dst.put(TYPE_CHARACTER).putChar((Character) value);
 		else if(value instanceof Short)
 			dst.put(TYPE_SHORT).putShort((Short) value);
+		else if(value instanceof Long)
+			dst.put(TYPE_LONG).putLong((Long) value);
 		else if(value instanceof Float)
 			dst.put(TYPE_FLOAT).putFloat((Float) value);
 		else if(value instanceof Double)
@@ -133,16 +133,19 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 	private Object read(ByteBuffer src) {
 		byte type = src.get();
 		switch(type) {
+			// check for the most common first
 			case TYPE_INTEGER: return src.getInt();
-			case TYPE_LONG: return src.getLong();
 			case TYPE_STRING:
 				byte[] bytes = new byte[src.getInt()];
 				src.get(bytes);
 				return new String(bytes);
+
+			// then the rest
 			case TYPE_BYTE: return src.get();
 			case TYPE_BOOLEAN: return src.get() == 0 ? false : true;
 			case TYPE_CHARACTER: return src.getChar();
 			case TYPE_SHORT: return src.getShort();
+			case TYPE_LONG: return src.getLong();
 			case TYPE_FLOAT: return src.getFloat();
 			case TYPE_DOUBLE: return src.getDouble();
 			default: throw new IllegalArgumentException("Invalid type: " + type);
