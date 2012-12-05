@@ -58,19 +58,18 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 		int capacity = 0;
 		List<ValueImpl> values = v.getValueList();
 		for(ValueImpl value : values)
-			capacity += getSerializedLength(value);
+			capacity += getSerializedLength(value.getValue());
 		ByteBuffer byteBuffer = ByteBuffer.allocate(capacity);
 		byteBuffer.clear();
 		for(ValueImpl value : values)
-			write(value, byteBuffer);
+			write(value.getValue(), byteBuffer);
 		return byteBuffer.array();
 	}
 	
-	private int getSerializedLength(ValueImpl v) {
+	private int getSerializedLength(Object value) {
 		
 		/* always add 1 for the byte marker */
 		
-		Object value = v.getValue();
 		// check for the most common first
 		if(value instanceof Integer)
 			return 4 + 1;
@@ -97,8 +96,7 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 		return ((String) value).toString().getBytes().length + 1 + 4; // + length field
 	}
 	
-	private void write(ValueImpl v, ByteBuffer dst) {
-		Object value = v.getValue();
+	private void write(Object value, ByteBuffer dst) {
 		// check for the most common first
 		if(value instanceof Integer)
 			dst.put(TYPE_INTEGER).putInt((Integer) value);
