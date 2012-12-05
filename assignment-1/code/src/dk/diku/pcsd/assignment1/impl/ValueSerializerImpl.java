@@ -21,40 +21,15 @@ public class ValueSerializerImpl implements ValueSerializer<ValueListImpl> {
 
 	@Override
 	public ValueListImpl fromByteArray(byte[] array) throws IOException {
-//		ValueListImpl valueList = new ValueListImpl();
-//		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
-//		while(byteBuffer.remaining() > 0) {
-//			byte[] bytes = new byte[byteBuffer.getInt()];
-//			byteBuffer.get(bytes);
-//			ValueImpl valueImpl = new ValueImpl();
-//			valueImpl.setValue(new String(bytes));
-//			valueList.add(valueImpl);
-//		}
-//		return valueList;
 		ValueListImpl valueList = new ValueListImpl();
 		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
-		while(byteBuffer.remaining() > 0) {
-			ValueImpl valueImpl = new ValueImpl();
-			valueImpl.setValue(read(byteBuffer));
-			valueList.add(valueImpl);
-		}
+		while(byteBuffer.remaining() > 0)
+			valueList.add(new ValueImpl(read(byteBuffer)));
 		return valueList;
 	}
 
 	@Override
 	public byte[] toByteArray(ValueListImpl v) throws IOException {
-//		int capacity = 0;
-//		List<ValueImpl> values = v.getValueList();
-//		for(ValueImpl value : values)
-//			capacity += ((String) value.getValue()).getBytes().length + 4;
-//		ByteBuffer byteBuffer = ByteBuffer.allocate(capacity);
-//		byteBuffer.clear();
-//		for(ValueImpl value : values) {
-//			byte[] bytes = ((String) value.getValue()).getBytes();
-//			byteBuffer.putInt(bytes.length);
-//			byteBuffer.put(bytes);
-//		}
-//		return byteBuffer.array();
 		int capacity = 0;
 		List<ValueImpl> values = v.getValueList();
 		for(ValueImpl value : values)
