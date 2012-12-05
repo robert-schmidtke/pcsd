@@ -79,7 +79,13 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 					}
 
 					for (int i = 1; i < values.length; i++) {
-						currentValues.add(new ValueImpl(values[i]));
+						try {
+							// try if we have a number
+							currentValues.add(new ValueImpl(Integer.parseInt(values[i])));
+						} catch(NumberFormatException e) {
+							// otherwise use the string
+							currentValues.add(new ValueImpl(values[i]));
+						}
 					}
 				}
 
