@@ -28,7 +28,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	private ValueSerializerImpl vs = new ValueSerializerImpl();
 
-	private int fileLength = 0;
+	private long fileLength = 0;
 
 	// List of empty parts in the MMF
 	// private List<SpaceIdent> emptyList = Collections
