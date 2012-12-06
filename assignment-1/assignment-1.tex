@@ -1,6 +1,6 @@
 \def\Module{Principles of Computer System Design}
 \def\Uebung{Assignment 1}
-\def\Studentenname{Marcus Voss (qcz284), R. Schmidtke (rxt809), Marco Eilers (dbk726)}
+\def\Studentenname{Marcus Voss (qcz284), Robert Schmidtke (rxt809), Marco Eilers (dbk726)}
 \def\Sub_date{06.12.2012}
 
 \documentclass[12pt,a4paper]{article}
@@ -266,9 +266,6 @@ To continuously and consistently test our implementation we created a set of uni
 \item BulkPutTest(): The test inserts 3000  keys into the store and then performs a bulkPut consisting of 3000 updates on randomly selected values. Two separate threads read keys throughout and check if the responses they get stem from the initial insert or from the bulkPut-update. They assert that once one updated value has been received, all following reads also return only updated values, meaning that no in-between states are visible to the client.
 \end{itemize}
 
-
-Vossi
-
 \subsection*{Question 4}
 \label{sec:pq4}
 \begin{itemize}
@@ -290,13 +287,11 @@ Vossi
 \subsection*{Question 6}
 \label{sec:pq6}
 The kind of operations performed highly influence these two performance measures: for write operations, not only the number of parallel requests can decrease throughput but also blocking of operations because of locking. Therefore we will concern ourselves only with read operations to make sure that performance decrease is only due to the increasing number of clients and not the application logic (locking).
-Vossi
 
 data set used is\footnote{Downloaded from: \url{http://an.kaist.ac.kr/~haewoon/release/twitter_social_graph/} [last accessed on: November 30, 2012]}
 
 \subsection*{Question 7}
 \label{sec:pq7} 
-Vossi
 
 \subsection*{Question 8}
 \label{sec:pq8}
