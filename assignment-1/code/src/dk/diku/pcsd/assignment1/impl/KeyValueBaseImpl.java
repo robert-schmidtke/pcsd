@@ -18,6 +18,13 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBase;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
+/**
+ * Implementation of our web service. Subclassed by KeyValueBaseImplService,
+ * which is a wrapper that is used as the service's actual interface to make
+ * JAX-WS happy. Mostly wraps methods from IndexImpl, but contains logic for
+ * initialization and evaluates predicates for scans.
+ * 
+ */
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	private IndexImpl index;
 	private boolean initialized = false, initializing = false;
@@ -30,7 +37,15 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		this.index = index;
 	}
 
-	@Override
+	/**
+	 * Initializes the store using the specified file, which must have the
+	 * format specified in the assignment text. If the provided fileName is
+	 * null, just initializes an empty store. Must be used before other
+	 * operations on the store are used, can only be used once.
+	 * 
+	 * The filename has to be specified relative to the computer's temp
+	 * directory as specified by java.io.tmpdir.
+	 */
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
 			ServiceInitializingException, FileNotFoundException {
@@ -56,7 +71,6 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		FileReader fr = new FileReader(filePath);
 		BufferedReader br = new BufferedReader(fr);
 
-		
 		String current;
 		try {
 			current = br.readLine();
@@ -81,8 +95,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 					for (int i = 1; i < values.length; i++) {
 						try {
 							// try if we have a number
-							currentValues.add(new ValueImpl(Integer.parseInt(values[i])));
-						} catch(NumberFormatException e) {
+							currentValues.add(new ValueImpl(Integer
+									.parseInt(values[i])));
+						} catch (NumberFormatException e) {
 							// otherwise use the string
 							currentValues.add(new ValueImpl(values[i]));
 						}

@@ -1,5 +1,9 @@
 package dk.diku.pcsd.assignment1.impl;
 
+/**
+ * Specifies an area of memory in the store.
+ * Contains an offset and a length.
+ */
 public class SpaceIdent implements Comparable<SpaceIdent> {
 	private long pos;
 
@@ -19,7 +23,6 @@ public class SpaceIdent implements Comparable<SpaceIdent> {
 		return next;
 	}
 
-	@Deprecated
 	public void setLength(int length) {
 		this.length = length;
 		this.next = pos + length;
