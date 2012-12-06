@@ -20,6 +20,11 @@ import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
 import dk.diku.pcsd.keyvaluebase.interfaces.Index;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
+/**
+ * The Index maps keys to areas in the store. Most of the store's logic is
+ * implemented here. The index also handles concurrency control. This class is a
+ * singleton.
+ */
 public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 	private static IndexImpl instance;
@@ -31,8 +36,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	private long fileLength = 0;
 
 	// List of empty parts in the MMF
-	// private List<SpaceIdent> emptyList = Collections
-	// .synchronizedList(new LinkedList<SpaceIdent>());
 	private SortedSet<SpaceIdent> emptyList = Collections
 			.synchronizedSortedSet(new TreeSet<SpaceIdent>());
 
@@ -54,11 +57,15 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		return instance;
 	}
 
-	/*
+	/**
 	 * Finds the location of an empty area in the MMF that has at least the
-	 * specified length. The first such area is returned, no matter how big it
-	 * is. If no such area is found, it returns a pointer to the end of the
-	 * currently used space. Removes the found space from the emptyList.
+	 * specified length. The first such area is used, no matter how big it is.
+	 * If it is bigger than required, the superfluous space is added to the
+	 * emptyList. If no fitting area is found in the emptyList, it returns a
+	 * pointer to the end of the currently used space. Removes the found space
+	 * from the emptyList. During the traversal of the emptyList, adjacent areas
+	 * of free space are joined to avoid fragmentation. Synchronized to make
+	 * sure no memory area is allocated to more than one value.
 	 */
 	private SpaceIdent findFreeSpace(int length) {
 		synchronized (emptyList) {
@@ -86,8 +93,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 			if (result != null) {
 				emptyList.remove(result);
 				int ldiff = result.getLength() - length;
-				if (ldiff > 0){
-					SpaceIdent empty = new SpaceIdent(result.getPos()+length, ldiff);
+				if (ldiff > 0) {
+					SpaceIdent empty = new SpaceIdent(result.getPos() + length,
+							ldiff);
 					result.setLength(length);
 					freeSpace(empty);
 				}
@@ -101,12 +109,10 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
+	/**
 	 * Marks the given space as free, i.e. inserts it into the emptyList. The
 	 * space itself is not overwritten or deleted until it is used by another
-	 * value. Also checks if there are areas of free space right before and/or
-	 * after the specified area and, if this is the case, concatenates them to
-	 * one big free area to avoid fragmentation.
+	 * value.
 	 */
 	private void freeSpace(SpaceIdent s) {
 		synchronized (emptyList) {
@@ -114,20 +120,18 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
+	/**
 	 * Inserts a new value in the list. Throws an exception if the specified key
-	 * already exists in the store. (non-Javadoc)
+	 * already exists in the store. Atomic.
 	 * 
-	 * @see
-	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#insert(dk.diku.pcsd.keyvaluebase
-	 * .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Value)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#insert(dk.diku.pcsd.keyvaluebase
+	 *      .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Value)
 	 */
 	public void insert(KeyImpl k, ValueListImpl v)
 			throws KeyAlreadyPresentException, IOException {
 		Lock writeLock = k.getWriteLock();
 		writeLock.lock();
 		try {
-
 			mappingsLock.readLock().lock();
 			boolean containsKey;
 			try {
@@ -144,7 +148,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 			store.write(space.getPos(), toWrite);
 
-
 			mappingsLock.writeLock().lock();
 			try {
 				mappings.put(k, space);
@@ -156,13 +159,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
+	/**
 	 * Removes a key-value-pair from the store. Throws an exception if the
-	 * specified key does not exist. (non-Javadoc)
+	 * specified key does not exist. Atomic.
 	 * 
-	 * @see
-	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#remove(dk.diku.pcsd.keyvaluebase
-	 * .interfaces.Key)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#remove(dk.diku.pcsd.keyvaluebase
+	 *      .interfaces.Key)
 	 */
 	public void remove(KeyImpl k) throws KeyNotFoundException {
 		Lock writeLock = k.getWriteLock();
@@ -193,13 +195,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
+	/**
 	 * Gets the value associated with a given key from the store. Throws an
-	 * exception if the specified key does not exist. (non-Javadoc)
+	 * exception if the specified key does not exist. Atomic.
 	 * 
-	 * @see
-	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#get(dk.diku.pcsd.keyvaluebase
-	 * .interfaces.Key)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#get(dk.diku.pcsd.keyvaluebase
+	 *      .interfaces.Key)
 	 */
 	public ValueListImpl get(KeyImpl k) throws KeyNotFoundException,
 			IOException {
@@ -225,13 +226,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
+	/**
 	 * Updates the value associated with a given key. Throws an exception if the
-	 * specified key does not exist. (non-Javadoc)
+	 * specified key does not exist. Atomic.
 	 * 
-	 * @see
-	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#update(dk.diku.pcsd.keyvaluebase
-	 * .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Value)
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#update(dk.diku.pcsd.keyvaluebase
+	 *      .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Value)
 	 */
 	public void update(KeyImpl k, ValueListImpl v) throws KeyNotFoundException,
 			IOException {
@@ -297,14 +297,14 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
-	 * Returns the values for all keys that are in the specified range. The
-	 * returned list ist NOT sorted. Throws an exception if begin > end
-	 * (non-Javadoc)
+	/**
+	 * Returns the values for all keys that are in the specified range. Throws
+	 * an exception if begin > end. NOT atomic, therefore the result may or may
+	 * not include values that were inserted or updated during the scan.
 	 * 
-	 * @see
-	 * dk.diku.pcsd.keyvaluebase.interfaces.Index#scan(dk.diku.pcsd.keyvaluebase
-	 * .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Key)
+	 * 
+	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#scan(dk.diku.pcsd.keyvaluebase
+	 *      .interfaces.Key, dk.diku.pcsd.keyvaluebase.interfaces.Key)
 	 */
 	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
@@ -321,8 +321,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 
 		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
 
-		// TODO: it may be more efficient to sort the list first
-		// and only check for one property in each iteration
 		for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
 			KeyImpl current = i.next();
 			if (begin.compareTo(current) <= 0 && end.compareTo(current) >= 0) {
@@ -336,7 +334,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		return result;
 	}
 
-	@Override
+	/**
+	 * Same functionality as scan, but atomic. Locks all keys in the store for read access. 
+	 */
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
 		if (begin.compareTo(end) > 0)
@@ -374,10 +374,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 	}
 
-	/*
-	 * TODO: writeLock throughout is probably not necessary, but just a readLock
-	 * throughout causes a deadlock and i think we need some kind of lock
-	 * throughout. yes we do. (non-Javadoc)
+	/**
+	 * Takes a list of key-value-pairs and inserts them into the store if the key does not exist, updated the value otherwise.
+	 * Atomic, so all keys that are to be manipulated are locked for write access throughout.
 	 * 
 	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
 	 */
@@ -392,12 +391,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 		}
 		try {
 			for (Pair<KeyImpl, ValueListImpl> p : newPairs) {
-				try{
+				try {
 					boolean containsKey = mappings.containsKey(p.getKey());
 
-					if (containsKey) 
+					if (containsKey)
 						update(p.getKey(), p.getValue());
-					else 
+					else
 						insert(p.getKey(), p.getValue());
 				} catch (Exception e) {
 					e.printStackTrace();

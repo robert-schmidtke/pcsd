@@ -6,6 +6,10 @@ import java.util.List;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.ValueList;
 
+/**
+ * Wrapper for a list of ValueImpls.
+ *
+ */
 @SuppressWarnings("serial")
 public class ValueListImpl implements ValueList<ValueImpl>{
 	
