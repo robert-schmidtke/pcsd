@@ -1,7 +1,7 @@
 \def\Module{Principles of Computer System Design}
 \def\Uebung{Assignment 1}
 \def\Studentenname{Marcus Voss (qcz284), R. Schmidtke (rxt809), Marco Eilers (dbk726)}
-\def\Sub_date{04.12.2012}
+\def\Sub_date{06.12.2012}
 
 \documentclass[12pt,a4paper]{article}
 
@@ -241,8 +241,6 @@ Although we are deliberately accessing data that has not been used in some time,
 \section*{Programming Task}
 \label{sec:programming}
 
-\subsection*{How to run our implementation}
-
 \subsection*{Question 1}
 \label{sec:pq1}
 There are basically three types of semantics: 'Exactly once', 'at most once' and 'at least once'. Since all of these three types rely on the interaction of client and server, it depends mostly on the client what type of semantics is employed (as it may choose to try again and again). The service and client implementations we provide are of the type 'at most once'. If the service is unavailable at the time of the request, the request is not repeated, but an exception is raised. Similarly, exceptions are raised on other errors during execution on the server (as per the \code{KeyValueBase} interface). The clients we ship respect that and do not try again, so the overall semantics used are of type 'at most once'. Other client implementations may prefer to retry the operation on failure until it has succeeded (at least) once which can be implemented just fine by keeping track of errors from the service.
@@ -278,7 +276,7 @@ Vossi
 \subsection*{Question 4}
 \label{sec:pq4}
 \begin{itemize}
-  \item number of clients: The number of clients that perform requests in parallel definitely affects the performance of our service: Tests have showed that when running a couple of thousand clients in parallel and have them make requests, some of their requests time out because the server is too busy and cannot respond in time (higher latency). Each request then takes longer and longer because the computing resources of the server need to be shared and for certain ACID-enforced operations the locking mechanism blocks more and more parallel requests (lower throughput). This is due to the fact that the store and the index are singletons in our setup and therefore form the bottleneck since every request eventually has to go through the single index and store instances.
+  \item number of clients: The number of clients that perform requests in parallel definitely affects the performance of our service: Tests have showed that when running a couple of thousand clients in parallel and have them make requests, some of their requests time out because the server is too busy and cannot respond in time (higher latency). Each request then takes longer and longer because the computing resources of the server need to be shared and for certain ACID-enforced operations the locking mechanism blocks more and more parallel requests (lower throughput). This is due to the fact that all operations have to lock the keys-to-space map (which exists only once) at some point, either for read or for write access, so from a certain number of clients onwards they will start to block each other even if they operate on different keys.
   \item hardware characteristics: Up to a certain extend the hardware characteristics influence the performance of the service, but as described above the bottleneck lies in the architecture of the service and not in lacking computing power. Of course, having a multi-core machine with sufficient memory and disk space to accomodate the Twitter data set is necessary, but adding cores or RAM at the point where thousands of parallel requests come in does not help any more. When transmitting huge values, the network connection plays a role too (e.g. when the hosting server is somewhere in South-East Asia where we have measured particularly low transmission rates).
   \item size of dataset managed: The performance of the service largely depends on the number of keys rather than the number of values managed since we maintain a mapping from keys to positions in the memory mapped file. So with a massively increasing number of keys we may encounter longer lookup times in the index, but since it is a Hashtable these increases should barely be noticable. If we are unlucky and perform frequent update operations that update values with slightly smaller values then we may encounter the problem of fragmentation since we would have many small areas of free memory that had previously been filled with the slightly larger values.
   \item mix of operations: If we intersperse read, insert, update and delete operations equally we have the situation that most of these operations actually require a write lock which blocks all the other operations. So parallel read operations should be considerably faster than parallel read and write operations.
@@ -306,7 +304,18 @@ Vossi
 
 \subsection*{Question 8}
 \label{sec:pq8}
-Marco
+There are a number experiments that we would have liked to do but lacked the necessary time or computing power:
+
+\begin{itemize}
+  \item More physical clients: Whenever we used several clients to test our store, we simply created several client threads on a single machine. Since most of our test cases and our main experiment generated considerable workload for the client, we can be certain that the client's hardware limitations have influenced our results. Apart from the limited CPU-power that was available for each client, this also meant that only one request could physically be sent at a time (although, of course, several requests vould be sent in short succession). It would have been nice to actually use a much higher number of physical clients to simulate more realistic conditions (maybe with smaller values), and see how this affects latency and throughput. 
+  \item Scalability: We ran our store on several machines, none of which had more than four CPU cores. Since one main requirement of the store was concurrency, we could have tested how the store behaves with a much higher number of cores, and if increasing the number of cores actually results in linearly higher throughput (and we therefore have good scalability).
+  \item Longterm memory consumption: Although we join adjacent free memory areas whereever possible, our store will probably still suffer from a certain amount of fragmentation when it runs long enough. We could have tracked how much space the store used over time when there are ongoing updates, inserts and deletes.
+  \item Behaviour for small values: The performance of our store suffered considerably when huge values (or very long lists of small values) were used, mostly because of the high workload for serialization and deserialization both for the memory mapped file and for transport in the SOAP message. Since SOAP web services in general are a horrible way to access big amounts of data, one would probably use a store like ours for smaller values in practice. We could have made performance tests with test data with much smaller values, which would have allowed us to increase the number of clients and get perhaps more meaningful performance data for any applications that might use such a store in practice.
+  \item Concurrency for long-running atomic operations: We did not check the performance of longer operations like atomicScan or bulkPut at all. We could have checked how a bulkPut affects the latency of other parallel operations, we could have compared the performance of bulkPut to that of equivalent insert and update operations, which would be a way to measure the overhead for the RPC invocation, or we could have compared the performance of scan and atomicScan to get an idea how much the locking affects latency.
+  \item Performance for real-life access patterns: Our experiment only measured latency for read access. It would be interesting to also check throughput and latency for a realistic mixture of insert, update, read and delete operations.
+  \item Impact of wrappers: As stated before, a lot of the store's workload stems from serialization of keys and values. We think that removing ValueImpl entirely (and simply putting strings into ValueListImpl) could have a considerably positive impact on the average latency, especially for lists with many small values. We would have liked to verify this assumption. Since the SOAP envelope is itself a kind of wrapper and SOAP is not known for its great performance, it would also have been interesting to check how a more lightweight protocol like a RESTful service would influence latency.
+  
+\end{itemize}
 
 \subsection*{Question 9}
 \label{sec:pq9}
