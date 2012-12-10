@@ -2,6 +2,10 @@ package dk.diku.pcsd.assignment1.impl;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
+/**
+ * Implementation of a key-value-pair.
+ *
+ */
 public class PairImpl extends Pair<KeyImpl, ValueListImpl> {
 
 	public PairImpl(){

@@ -16,6 +16,10 @@ import dk.diku.pcsd.keyvaluebase.exceptions.ServiceNotInitializedException;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
+/**
+ * This class is used by JAX-WS to create the web service.
+ *
+ */
 @WebService
 public class KeyValueBaseImplService extends KeyValueBaseImpl {
 	
