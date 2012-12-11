@@ -1,5 +1,6 @@
 package dk.diku.pcsd.assignment2.impl;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -7,8 +8,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.Key;
 
-public class KeyImpl implements Key<KeyImpl>
+public class KeyImpl implements Key<KeyImpl>, Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2576953308178505105L;
+
 	private static HashMap<String, ReadWriteLock> locks = new HashMap<String, ReadWriteLock>();
 	
 	private String key;

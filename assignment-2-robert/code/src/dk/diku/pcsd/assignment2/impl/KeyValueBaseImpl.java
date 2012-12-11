@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
@@ -14,20 +16,62 @@ import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceAlreadyInitializedException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceInitializingException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceNotInitializedException;
-import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBase;
+import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
+import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
-public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
+public class KeyValueBaseImpl implements KeyValueBaseLog<KeyImpl, ValueListImpl> {
 	private IndexImpl index;
-	private boolean initialized = false, initializing = false;
+	private LoggerImpl logger;
+	
+	private CheckpointerImpl checkpointer;
+	private ReadWriteLock quiesceLock;
+	
+	private boolean initialized = false, initializing = false, logging = true;
 
 	public KeyValueBaseImpl() {
-		this(IndexImpl.getInstance());
+		this(IndexImpl.getInstance(), LoggerImpl.getInstance(), CheckpointerImpl.getInstance());
 	}
 
-	private KeyValueBaseImpl(IndexImpl index) {
-		this.index = index;
+	private KeyValueBaseImpl(IndexImpl index, LoggerImpl logger, CheckpointerImpl checkpointer) {
+		quiesceLock = new ReentrantReadWriteLock(true);
+		this.logger = logger; this.checkpointer = checkpointer;
+		this.checkpointer.init(this);
+		
+		if(this.logger.canRecover()) {
+			this.index = this.logger.recoverIndex();
+			List<LogRecord> records = this.logger.recoverLogRecords();
+			
+			// if we have not the situation that the first log entry is init
+			// then we must declare the service as initialized and start the logger and checkpointer
+			// because the log is only created after init
+			initialized = !(records.size() > 0 && records.get(0).getMethodName().equals("init"));
+			boolean wasInitialized = initialized;
+			
+			logging = false;
+			for(LogRecord record : records) {
+				try {
+					record.invoke(this);
+				} catch (Exception e) {
+					throw new RuntimeException(e.getMessage(), e);
+				}
+			}
+			logging = true;
+
+			if(wasInitialized) {
+				new Thread(this.logger).start();
+				new Thread(this.checkpointer).start();
+			}
+		} else
+			this.index = index;
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		logger.stop();
+		checkpointer.stop();
+		super.finalize();
 	}
 
 	@Override
@@ -38,11 +82,19 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			throw new ServiceAlreadyInitializedException();
 		if (initializing)
 			throw new ServiceInitializingException();
+		
+		quiesceLock.readLock().lock();
 		initializing = true;
+		
+		new Thread(logger).start();
+		new Thread(checkpointer).start();
+		
+		if(logging) log("init", serverFilename);
 
-		if (serverFilename == null) {
+		if ("".equals(serverFilename)) {
 			initialized = true;
 			initializing = false;
+			quiesceLock.readLock().unlock();
 			return;
 		}
 
@@ -106,6 +158,8 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		} catch (KeyAlreadyPresentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			quiesceLock.readLock().unlock();
 		}
 	}
 
@@ -114,7 +168,10 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			IOException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
-		return index.get(k);
+		quiesceLock.readLock().lock();
+		ValueListImpl v = index.get(k);
+		quiesceLock.readLock().unlock();
+		return v;
 	}
 
 	@Override
@@ -123,7 +180,10 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
+		if(logging) log("insert", k, v);
 		index.insert(k, v);
+		quiesceLock.readLock().unlock();
 	}
 
 	@Override
@@ -132,7 +192,10 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
+		if(logging) log("update", k, newV);
 		index.update(k, newV);
+		quiesceLock.readLock().unlock();
 	}
 
 	@Override
@@ -140,7 +203,10 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
+		if(logging) log("delete", k);
 		index.remove(k);
+		quiesceLock.readLock().unlock();
 	}
 
 	@Override
@@ -149,12 +215,14 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			BeginGreaterThanEndException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
 		List<ValueListImpl> allValues = index.scan(begin, end);
 		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext();) {
 			ValueListImpl current = i.next();
 			if (!p.evaluate(current))
 				i.remove();
 		}
+		quiesceLock.readLock().unlock();
 		return allValues;
 	}
 
@@ -164,12 +232,14 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			BeginGreaterThanEndException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
 		List<ValueListImpl> allValues = index.atomicScan(begin, end);
 		for (Iterator<ValueListImpl> i = allValues.iterator(); i.hasNext();) {
 			ValueListImpl current = i.next();
 			if (!p.evaluate(current))
 				i.remove();
 		}
+		quiesceLock.readLock().unlock();
 		return allValues;
 	}
 
@@ -178,7 +248,34 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			throws IOException, ServiceNotInitializedException {
 		if (!initialized)
 			throw new ServiceNotInitializedException();
+		quiesceLock.readLock().lock();
+		if(logging) log("bulkPut", mappings);
 		index.bulkPut(mappings);
+		quiesceLock.readLock().unlock();
+	}
+	
+	@Override
+	public void quiesce() {
+		quiesceLock.writeLock().lock();
+	}
+
+	@Override
+	public void resume() {
+		quiesceLock.writeLock().unlock();
+	}
+	
+	/**
+	 * Logging helper that waits for the log to be written.
+	 * 
+	 * @param methodName
+	 * @param params
+	 */
+	private void log(String methodName, Object... params) {
+		try {
+			logger.logRequest(new LogRecord(getClass(), methodName, params)).get();
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage(), e);
+		}
 	}
 
 }

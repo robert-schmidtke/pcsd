@@ -1,6 +1,7 @@
 package dk.diku.pcsd.assignment2.impl;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -20,7 +21,12 @@ import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
 import dk.diku.pcsd.keyvaluebase.interfaces.Index;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
-public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
+public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1376758964641277685L;
 
 	private static IndexImpl instance;
 
@@ -29,6 +35,24 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
 	private ValueSerializerImpl vs = new ValueSerializerImpl();
 
 	private long fileLength = 0;
+
+	public long getFileLength() {
+		return fileLength;
+	}
+
+	public SortedSet<SpaceIdent> getEmptyList() {
+		return emptyList;
+	}
+
+	public Map<KeyImpl, SpaceIdent> getMappings() {
+		return mappings;
+	}
+	
+	public void init(long fileLength, SortedSet<SpaceIdent> emptyList, Map<KeyImpl, SpaceIdent> mappings) {
+		this.fileLength = fileLength;
+		this.emptyList = emptyList;
+		this.mappings = mappings;
+	}
 
 	// List of empty parts in the MMF
 	// private List<SpaceIdent> emptyList = Collections

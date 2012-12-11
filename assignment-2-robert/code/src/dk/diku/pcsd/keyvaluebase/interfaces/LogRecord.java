@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 
@@ -29,7 +31,7 @@ public class LogRecord implements Serializable {
 	private Class<?> className;
 	private String methodName;
 	private int numberParam;
-	private transient Object[] params;
+	private Object[] params;
 
 	public LogRecord(Class<?> srcClass, String methodName, Object[] params) {
 		this.className = srcClass;
@@ -59,8 +61,13 @@ public class LogRecord implements Serializable {
 			IllegalAccessException, InvocationTargetException {
 
 		Class<?>[] params = new Class<?>[this.numberParam];
-		for (int i=0; i<this.numberParam; i++)
-			params[i] = this.params[i].getClass();
+		for (int i=0; i<this.numberParam; i++) {
+			Class<?> paramClass = this.params[i].getClass();
+			if(Arrays.asList(paramClass.getInterfaces()).contains(List.class))
+				params[i] = List.class;
+			else
+				params[i] = this.params[i].getClass();
+		}
 		
 		Method m =  this.className.getMethod(methodName, params);
 		return m.invoke(src, this.params);

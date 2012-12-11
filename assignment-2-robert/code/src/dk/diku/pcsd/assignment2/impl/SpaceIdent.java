@@ -1,6 +1,13 @@
 package dk.diku.pcsd.assignment2.impl;
 
-public class SpaceIdent implements Comparable<SpaceIdent> {
+import java.io.Serializable;
+
+public class SpaceIdent implements Comparable<SpaceIdent>, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1330331121961034752L;
+
 	private long pos;
 
 	private int length;

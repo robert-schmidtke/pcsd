@@ -6,19 +6,19 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.regex.Matcher;
 
-import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedFile;
+import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedPinnable;
 import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 
 public class StoreImpl implements Store {
-	
+
 	// size of the file
-	private static final long MMF_SIZE = 1073741824; // 1GB
+	private static final long MMP_SIZE = 1073741824; // 1GB
 	
 	// the actual file
-	private final RandomAccessFile mmfRandomAccessFile;
+	private final RandomAccessFile mmpRandomAccessFile;
 	
 	// abstraction over the file
-	private final MemoryMappedFile mmf;
+	private final MemoryMappedPinnable mmp;
 	
 	// singleton
 	private static StoreImpl instance = null;
@@ -35,20 +35,16 @@ public class StoreImpl implements Store {
 			tmpDir += File.separator;
 		
 		// versioning of the store
-		String mmfPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + File.separator + "store.mmf";
-		File mmfFile = new File(mmfPath);
+		String mmpPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + File.separator + "store.mmp";
+		File mmpFile = new File(mmpPath);
 
 		try {
-			// always create new file
-			if(mmfFile.exists())
-				mmfFile.delete();
-			
-			mmfFile.getParentFile().mkdirs();
-			mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
-			mmfRandomAccessFile.setLength(MMF_SIZE);
+			mmpFile.getParentFile().mkdirs();
+			mmpRandomAccessFile = new RandomAccessFile(mmpPath, "rw");
+			mmpRandomAccessFile.setLength(MMP_SIZE);
 			
 			// initialize the memory mapped file with either the old file or the newly created one
-			mmf = new MemoryMappedFile(mmfRandomAccessFile.getChannel(), FileChannel.MapMode.READ_WRITE, 0, MMF_SIZE);
+			mmp = new MemoryMappedPinnable(mmpRandomAccessFile.getChannel(), FileChannel.MapMode.READ_WRITE, 0, MMP_SIZE);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -56,8 +52,8 @@ public class StoreImpl implements Store {
 	
 	@Override
 	protected void finalize() throws Throwable {
-		// close the raf on garbace collection
-		mmfRandomAccessFile.close();
+		// close the raf on garbage collection
+		mmpRandomAccessFile.close();
 		super.finalize();		
 	}
 
@@ -65,7 +61,7 @@ public class StoreImpl implements Store {
 	public byte[] read(Long position, int length) {
 		try {
 			byte[] dst = new byte[length];
-			mmf.get(dst, position);
+			mmp.get(dst, position);
 			return dst;
 		} catch(Exception e) {
 			throw new RuntimeException("Position: " + position + ", Length: " + length + ", " + e.getMessage(), e);
@@ -75,10 +71,14 @@ public class StoreImpl implements Store {
 	@Override
 	public void write(Long position, byte[] value) {
 		try {
-			mmf.put(value, position);
+			mmp.writePinned(value, position);
 		} catch(Exception e) {
 			throw new RuntimeException("Position: " + position + ", Length: " + value.length + ", " + e.getMessage(), e);
 		}
+	}
+	
+	public void flush() {
+		mmp.flush();
 	}
 	
 }
