@@ -119,7 +119,7 @@ public class LoggingTest {
 		
 		// make the checkpointer run
 		try {
-			Thread.sleep(25000);
+			Thread.sleep(40000);
 		} catch(Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
