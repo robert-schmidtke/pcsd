@@ -1,6 +1,6 @@
-1 threads: 1260156ns
-2 threads: 767611ns
-3 threads: 354502ns
-4 threads: 432505ns
-5 threads: 522651ns
-6 threads: 619123ns
+1 threads: 1193072ns per thread, 53794889320ns overall
+2 threads: 773981ns per thread, 34910378025ns overall
+3 threads: 359761ns per thread, 16300335577ns overall
+4 threads: 438622ns per thread, 19866201395ns overall
+5 threads: 543086ns per thread, 24870187462ns overall
+6 threads: 647614ns per thread, 29301654681ns overall
