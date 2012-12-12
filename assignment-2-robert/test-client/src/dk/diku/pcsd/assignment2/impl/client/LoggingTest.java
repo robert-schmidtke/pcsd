@@ -37,7 +37,7 @@ public class LoggingTest {
 		
 		// initialize server the first time
 		try {
-			kvbis.init("dk/init");
+			kvbis.init("dk/init.list");
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -48,7 +48,7 @@ public class LoggingTest {
 		
 		boolean failed = false;
 		try {
-			kvbis.init("dk/init");
+			kvbis.init("dk/init.list");
 		} catch (Exception e) {
 			failed = e instanceof ServiceAlreadyInitializedException_Exception;
 		}
@@ -216,7 +216,7 @@ public class LoggingTest {
 		System.out.print("Starting Tomcat... ");
 		try {
 			new ProcessBuilder("/home/robert/apache-tomcat-7.0.33/bin/startup.sh").start().waitFor();
-			Thread.sleep(2500);
+			Thread.sleep(6000);
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -227,7 +227,7 @@ public class LoggingTest {
 		System.out.print("Stopping Tomcat... ");
 		try {
 			new ProcessBuilder("/home/robert/apache-tomcat-7.0.33/bin/shutdown.sh").start().waitFor();
-			Thread.sleep(1500);
+			Thread.sleep(3000);
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}

@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -82,20 +83,24 @@ public class LoggerImpl implements Logger {
 		long lastRun = System.currentTimeMillis();
 		while(execute) {
 			if(logQueue.size() >= K || (logQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
-				while(logQueue.size() > 0) {
-					LogQueueEntry<Date> entry = logQueue.poll();
+				Iterator<LogQueueEntry<Date>> it = logQueue.iterator();
+				while(it.hasNext()) {
+					LogQueueEntry<Date> entry = it.next();
 					try {
 						out.writeObject(entry.record);
 					} catch (IOException e) {
 						throw new RuntimeException(e.getMessage(), e);
 					}
-					entry.future.signalAll(new Date());
 				}
 				
 				try {
 					out.flush();
 				} catch (IOException e) {
 					throw new RuntimeException(e.getMessage(), e);
+				}
+				
+				while(logQueue.size() > 0) {
+					logQueue.poll().future.signalAll(new Date());
 				}
 				
 				lastRun = System.currentTimeMillis();
