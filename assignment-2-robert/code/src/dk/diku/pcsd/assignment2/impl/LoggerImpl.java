@@ -10,11 +10,11 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.FutureLog;
@@ -23,11 +23,11 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
 public class LoggerImpl implements Logger {
 	
-	private static final int K = 5, TIMEOUT = 10000;
+	private static final int K = 1, TIMEOUT = 0;
 		
 	private boolean execute, truncate;
 	
-	private LinkedList<LogQueueEntry<Date>> logQueue;
+	private LinkedBlockingQueue<LogQueueEntry<Date>> logQueue;
 	
 	private File logFile;
 	private ObjectOutputStream out;
@@ -41,7 +41,7 @@ public class LoggerImpl implements Logger {
 	}
 	
 	private LoggerImpl() {
-		logQueue = new LinkedList<LogQueueEntry<Date>>();
+		logQueue = new LinkedBlockingQueue<LogQueueEntry<Date>>();
 		execute = false; truncate = false;
 		
 		String tmpDir = System.getProperty("java.io.tmpdir");
@@ -81,7 +81,7 @@ public class LoggerImpl implements Logger {
 		initOutputStream();
 		long lastRun = System.currentTimeMillis();
 		while(execute) {
-			if(logQueue.size() >= K || System.currentTimeMillis() - lastRun >= TIMEOUT) {
+			if(logQueue.size() >= K || (logQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
 				while(logQueue.size() > 0) {
 					LogQueueEntry<Date> entry = logQueue.poll();
 					try {

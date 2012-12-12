@@ -4,31 +4,32 @@ import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 public class MemoryMappedPinnable extends MemoryMappedFile {
 	public static int developmentVersion = 1;
 
-	private Hashtable<PinnedRegion,byte[]> pinned_regions;
+	private LinkedHashMap<PinnedRegion,byte[]> pinned_regions;
 
 	public MemoryMappedPinnable(FileChannel channel, MapMode mode, int offset,
 			long totalSize) throws IndexOutOfBoundsException, IOException {
 
 		super(channel, mode, offset, totalSize);
 		
-		this.pinned_regions = new Hashtable<PinnedRegion,byte[]>();		
+		this.pinned_regions = new LinkedHashMap<PinnedRegion,byte[]>();		
 	}
 
 	public void flush () {
-		
-		Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
-		while(it.hasNext()) {
-			PinnedRegion p = it.next();
-			super.put(this.pinned_regions.get(p), p.getStartPosition());
+		synchronized(pinned_regions) {
+			Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
+			while(it.hasNext()) {
+				PinnedRegion p = it.next();
+				super.put(this.pinned_regions.get(p), p.getStartPosition());
+			}
+			
+			this.pinned_regions.clear();
 		}
-		
-		this.pinned_regions.clear();
 		
 		for (int i = 0; i< super.buffers.size();i++)
 			super.buffers.get(i).force();
@@ -40,25 +41,29 @@ public class MemoryMappedPinnable extends MemoryMappedFile {
 			throw new IndexOutOfBoundsException();
 		
 		PinnedRegion pR = new PinnedRegion(offset, src.length);
-		Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
+		/* Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
 		while(it.hasNext()) {
 			if (pR.overlaps(it.next())) {
 				it.remove();
 			}
-		}
+		} */
 
-		this.pinned_regions.put(pR, src);
+		synchronized(pinned_regions) {
+			this.pinned_regions.put(pR, src);
+		}
 	}
 
 	public void unpin (long offset, int length) {
 
 		PinnedRegion pR = new PinnedRegion(offset, length);
-		if (!this.pinned_regions.containsKey(pR))
-			throw new IndexOutOfBoundsException();
-		
-		byte[] data = this.pinned_regions.get(pR);
-		this.pinned_regions.remove(pR);
-		this.put(data, offset);
+		synchronized(pinned_regions) {
+			if (!this.pinned_regions.containsKey(pR))
+				throw new IndexOutOfBoundsException();
+			
+			byte[] data = this.pinned_regions.get(pR);
+			this.pinned_regions.remove(pR);
+			this.put(data, offset);
+		}
 	}
 	
 	@Override
@@ -69,12 +74,14 @@ public class MemoryMappedPinnable extends MemoryMappedFile {
 
 		PinnedRegion pR = new PinnedRegion(offset, dst.length);
 
-		if (!this.pinned_regions.containsKey(pR)){
-			super.get(dst, offset);
-		}
-		else{
-			byte[] value = this.pinned_regions.get(pR);
-			System.arraycopy(value, 0, dst, 0, value.length);
+		synchronized(pinned_regions) {
+			if (!this.pinned_regions.containsKey(pR)){
+				super.get(dst, offset);
+			}
+			else{
+				byte[] value = this.pinned_regions.get(pR);
+				System.arraycopy(value, 0, dst, 0, value.length);
+			}
 		}
 
 	}

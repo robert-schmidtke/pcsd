@@ -48,6 +48,7 @@
 % -----
 \subsection{Implementation}
 \label{sec:pt1}
+why unpin was not used, no real advantage except memory and this does not count in our small ex
 
 % -----
 \subsection{Tests}
@@ -56,6 +57,9 @@
 % -----
 \subsection{Experimental Setup}
 \label{sec:pt3}
+The performance of the service with logging must be measured against the (otherwise similar) service that does not use logging. Other parameters must remain constant. Therefore the same experiment must be run against these two service implementations. In order to ensure that all other parameters remain fixed, the experiments will be run on the same machine and perform the same sequence of operations on the same data set. Since read operations do not incur log entries, update operations will be performed. To determine the influence of the number of concurrently operating clients, different sizes of client sets will be used per experiment.
+
+The results will then be averaged over multiple runs. Specifically, the latency per client will be measured which is then simply the inverse of the throughput. The data set will be keys with just one value to minimize overhead produced by serializing and deserializing.
 
 % -----
 \subsection{Experiment}

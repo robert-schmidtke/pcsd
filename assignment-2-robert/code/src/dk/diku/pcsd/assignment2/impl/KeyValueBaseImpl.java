@@ -28,7 +28,7 @@ public class KeyValueBaseImpl implements KeyValueBaseLog<KeyImpl, ValueListImpl>
 	private CheckpointerImpl checkpointer;
 	private ReadWriteLock quiesceLock;
 	
-	private boolean initialized = false, initializing = false, logging = true;
+	private boolean initialized = false, initializing = false, logging = false;
 
 	public KeyValueBaseImpl() {
 		this(IndexImpl.getInstance(), LoggerImpl.getInstance(), CheckpointerImpl.getInstance());
@@ -90,7 +90,8 @@ public class KeyValueBaseImpl implements KeyValueBaseLog<KeyImpl, ValueListImpl>
 		
 		initializing = true;
 		
-		new Thread(logger).start();
+		if(logging)
+			new Thread(logger).start();
 		new Thread(checkpointer).start();
 		
 		if(logging) log("init", serverFilename);
