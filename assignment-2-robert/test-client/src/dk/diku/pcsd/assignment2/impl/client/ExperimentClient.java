@@ -51,16 +51,16 @@ public class ExperimentClient {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		
-		long[] subResults = new long[threadCounts.length];
+		long[][] subResults = new long[threadCounts.length][2];
 		for(int i = 0; i < threadCounts.length; ++i)
 			subResults[i] = runSubExperiment(kvbis, threadCounts[i], repititions, values);
 		
 		for(int i = 0; i < subResults.length; ++i) {
-			System.out.println(threadCounts[i] + " threads: " + subResults[i] + "ns");
+			System.out.println(threadCounts[i] + " threads: " + subResults[i][0] + "ns per thread, " + subResults[i][1] + "ns overall");
 		}
 	}
 	
-	public Long runSubExperiment(final KeyValueBaseImplService kvbis, final int threadCount, final int repititions, final Map<KeyImpl, ValueListImpl> values) {
+	public long[] runSubExperiment(final KeyValueBaseImplService kvbis, final int threadCount, final int repititions, final Map<KeyImpl, ValueListImpl> values) {
 		
 		System.out.println("Running sub experiment with " + threadCount + " threads ...");
 		
@@ -71,13 +71,14 @@ public class ExperimentClient {
 		
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 		List<Future<Long>> results;
+
+		long averageTime = 0, overallTime = System.nanoTime();
 		try {
 			results = executor.invokeAll(workers);
 		} catch(Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		
-		long averageTime = 0;
 		for(Future<Long> result : results) {
 			try {
 				averageTime += result.get();
@@ -85,10 +86,11 @@ public class ExperimentClient {
 				throw new RuntimeException(e.getMessage(), e);
 			}
 		}
+		overallTime = System.nanoTime() - overallTime;
 		
 		executor.shutdown();
 		
-		return averageTime / threadCount;
+		return new long[] { averageTime / threadCount, overallTime };
 		
 	}
 	
