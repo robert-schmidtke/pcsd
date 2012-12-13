@@ -24,7 +24,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
 public class LoggerImpl implements Logger {
 	
-	private static final int K = 1, TIMEOUT = 0;
+	private static final int K = 10, TIMEOUT = 30000;
 		
 	private boolean execute, truncate;
 	
