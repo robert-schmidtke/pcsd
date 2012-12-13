@@ -194,7 +194,7 @@ public class LoggerImpl implements Logger {
 		}
 		
 		@Override
-		public void writeStreamHeader() throws IOException {
+		protected void writeStreamHeader() throws IOException {
 			// if we append we don't want the header
 			reset();
 		}
