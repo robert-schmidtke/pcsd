@@ -3,7 +3,7 @@
 \def\Studentenname{Marcus Voss (qcz284), Robert Schmidtke (rxt809), Marco Eilers (dbk726)}
 \def\Sub_date{08.01.2013}
 
-\documentclass[12pt,a4paper]{article}
+\documentclass[12pt,a4paper,fleqn]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -75,17 +75,35 @@
 
 \begin{enumerate}
   \item Exokernel:
-  \item Encrypted data transmission:
+  \item Encrypted data transmission:[fleqn]
 \end{enumerate}
 
 \subsection*{Question 3}
 \label{sec:pq3}
 
 \subsubsection*{(a)}
+The probability that the daisy chain is connecting all buildings is 100\% minus the twice the probability that one link fails and one is available, minus the probability that both fail, so: 
+\begin{align*}
+P_{availability} &= 1-2(1-p)p - p^2 = 1-2p + p^2 \\
+&= (1-p)^2
+\end{align*}
 
 \subsubsection*{(b)}
+The probability that the fully connected network is still connecting all buildings is 100\% minus the three cases that two links fail and only one is available, minus the probability that all three fail, so:
+\begin{align*}
+P_{availability} &= 1-3(1-p)p^2 - p^3 \\
+&= 1 + 2p^3 - 3p^2
+\end{align*}
 
 \subsubsection*{(c)}
+We choose the offer that maximises the availability given the budget constraints. Using the formulas from above we get:
+\begin{align*}
+P_{Daisy} &= (1-0.000001)^2 \approx 0.999998 \\
+P_{Fully} &= 1 + 2p^3 - 3p^2 = 1 + 2(0.0001)^3-3(0.0001)^2 \approx 0.99999997 \\ 
+&\Rightarrow P_{Daisy} < P_{Fully}
+\end{align*}
+
+We hence choose the fully connected network.
 
 \subsection*{Question 4}
 \label{sec:pq4}
