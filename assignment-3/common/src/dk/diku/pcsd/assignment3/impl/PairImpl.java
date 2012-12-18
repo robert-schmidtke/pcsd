@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
-public class PairImpl<K extends Comparable<K>,V> extends Pair<K, V> implements Serializable {
+public class PairImpl extends Pair<KeyImpl,ValueListImpl> implements Serializable {
 
 	/**
 	 * 
@@ -15,31 +15,31 @@ public class PairImpl<K extends Comparable<K>,V> extends Pair<K, V> implements S
 		super();
 	}
 	
-	public PairImpl(K k, V v) {
+	public PairImpl(KeyImpl k, ValueListImpl v) {
 		super(k, v);
 	}
 	
 	@Override
-	public K getKey() {
+	public KeyImpl getKey() {
 		return super.getKey();
 	}
 	
-	public void setKey(K k){
+	public void setKey(KeyImpl k){
 		this.k=k;
 	}
 	
-	public void setValue(V v){
+	public void setValue(ValueListImpl v){
 		this.v=v;
 	}
 	
 	@Override
-	public V getValue() {
+	public ValueListImpl getValue() {
 		return super.getValue();
 	}
 
 	@Override
-	public int compareTo(Pair<K, V> o) {
-		return k.compareTo(o.getKey());
+	public int compareTo(Pair<KeyImpl, ValueListImpl> arg0) {
+		return k.compareTo(arg0.getKey());
 	}
 
 	

@@ -1,5 +1,8 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.slave.impl;
 
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseReplicaImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseSlave;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 

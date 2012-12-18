@@ -12,7 +12,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 public class StoreImpl implements Store {
 
 	// size of the file
-	private static final long MMP_SIZE = 1073741824; // 1GB
+	private static final long MMP_SIZE = 1024L*1024L*2; // 1GB
 	
 	// the actual file
 	private final RandomAccessFile mmpRandomAccessFile;

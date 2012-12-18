@@ -6,9 +6,11 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 import dk.diku.pcsd.assignment3.impl.PairImpl;
+import dk.diku.pcsd.assignment3.impl.TimestampListPair;
+import dk.diku.pcsd.assignment3.impl.TimestampPair;
 
-@XmlSeeAlso({PairImpl.class})
-public abstract class Pair<K extends Comparable<K>, V> implements Comparable<Pair<K,V>>, Serializable{
+@XmlSeeAlso({PairImpl.class, TimestampPair.class, TimestampListPair.class})
+public abstract class Pair<K, V> implements Comparable<Pair<K,V>>, Serializable{
 	/**
 	 * 
 	 */

@@ -1,5 +1,8 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.master.impl;
 
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.StoreImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.interfaces.Checkpointer;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 

@@ -1,4 +1,4 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.slave.impl;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -7,6 +7,8 @@ import java.util.List;
 import javax.jws.WebMethod;
 import javax.jws.WebService;
 
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceAlreadyInitializedException;

@@ -1,4 +1,4 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.master.impl;
 
 import java.io.IOException;
 import java.util.Date;

@@ -15,7 +15,7 @@ public class TimestampLog implements Serializable, Comparable<TimestampLog> {
 		this.ind = ind;
 	}
 
-	private TimestampLog() {
+	public TimestampLog() {
 	}
 	
 	public boolean before(TimestampLog t) {
@@ -43,5 +43,15 @@ public class TimestampLog implements Serializable, Comparable<TimestampLog> {
 	public TimestampLog duplicate(){
 		return new TimestampLog(ind);
 	}
+
+	public Long getInd() {
+		return ind;
+	}
+
+	public void setInd(Long ind) {
+		this.ind = ind;
+	}
+	
+	
 	
 }

@@ -1,4 +1,4 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.master.impl;
 
 import java.io.EOFException;
 import java.io.File;
@@ -18,6 +18,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 
+import dk.diku.pcsd.assignment3.impl.IndexImpl;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.SpaceIdent;
 import dk.diku.pcsd.keyvaluebase.interfaces.FutureLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Logger;

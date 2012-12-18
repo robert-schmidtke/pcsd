@@ -123,7 +123,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 		}
 		TimestampLog lsn = LogRecord.lastTimestamp.duplicate();
 		ValueListImpl v = index.get(k);
-		return new PairImpl<TimestampLog, ValueListImpl>(lsn, v);
+		return new TimestampPair(lsn, v);
 	}
 
 	@Override
@@ -140,7 +140,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 			if (!p.evaluate(current))
 				i.remove();
 		}
-		return new PairImpl<TimestampLog, List<ValueListImpl>>(lsn, allValues);
+		return new TimestampListPair(lsn, allValues);
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 			if (!p.evaluate(current))
 				i.remove();
 		}
-		return new PairImpl<TimestampLog, List<ValueListImpl>>(lsn, allValues);
+		return new TimestampListPair(lsn, allValues);
 	}
 
 }

@@ -1,14 +1,15 @@
-package dk.diku.pcsd.assignment3.impl;
+package dk.diku.pcsd.assignment3.master.impl;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import dk.diku.pcsd.assignment3.impl.IndexImpl;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseReplicaImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
@@ -106,7 +107,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 
 			if (logging)
 				log("init", serverFilename);
-			
+
 			super.init(serverFilename);
 		} finally {
 			quiesceLock.readLock().unlock();
