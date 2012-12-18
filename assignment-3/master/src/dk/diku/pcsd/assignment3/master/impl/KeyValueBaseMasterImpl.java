@@ -2,14 +2,21 @@ package dk.diku.pcsd.assignment3.master.impl;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import javax.xml.namespace.QName;
 
 import dk.diku.pcsd.assignment3.impl.IndexImpl;
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.impl.KeyValueBaseReplicaImpl;
 import dk.diku.pcsd.assignment3.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplService;
+import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplServiceService;
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
@@ -36,6 +43,8 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	private ReplicatorImpl replicator;
 
 	private boolean logging = true, recovering = false;
+	
+	List<KeyValueBaseSlaveImplService> slaves;
 
 	public KeyValueBaseMasterImpl() {
 		this(IndexImpl.getInstance(), ReplicatorImpl.getInstance(),
@@ -247,7 +256,19 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	@Override
 	public void config(Configuration conf)
 			throws ServiceAlreadyConfiguredException {
-		// TODO Auto-generated method stub
+		slaves = new ArrayList<KeyValueBaseSlaveImplService>();
+		
+		for (int i = 0; i<conf.slaves.length; i++){
+			String current = conf.slaves[i];
+			try {
+				KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(new URL(current), new QName(current));
+				slaves.add(service.getKeyValueBaseSlaveImplServicePort());
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		replicator.setSlaves(slaves);
 
 	}
 
