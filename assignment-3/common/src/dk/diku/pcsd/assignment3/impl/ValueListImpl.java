@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlType;
+
 import dk.diku.pcsd.keyvaluebase.interfaces.ValueList;
 
 @SuppressWarnings("serial")
+@XmlType
 public class ValueListImpl implements ValueList<ValueImpl>{
 	
 	private List<ValueImpl> valueList = new ArrayList<ValueImpl>();

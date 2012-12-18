@@ -1,5 +1,8 @@
 package dk.diku.pcsd.keyvaluebase.interfaces;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class is intended to keep the WSDL
  * file locations of all the internal RPC
@@ -8,7 +11,20 @@ package dk.diku.pcsd.keyvaluebase.interfaces;
  * replicas.
  */
 public class Configuration {
-	public String master = "http://localhost:12345/keyValueBase/master?wsdl";
-	public String[] slaves = {	"http://localhost:12345/keyValueBase/slave1?wsdl",
-								"http://localhost:12345/keyValueBase/slave2?wsdl" };
+	private String master = "http://localhost:12345/keyValueBase/master?wsdl";
+	private List<String> slaves = new ArrayList<String>();
+	public String getMaster() {
+		return master;
+	}
+	public void setMaster(String master) {
+		this.master = master;
+	}
+	public List<String> getSlaves() {
+		return slaves;
+	}
+	public void setSlaves(List<String> slaves) {
+		this.slaves = slaves;
+	}
+	
+	
 }
