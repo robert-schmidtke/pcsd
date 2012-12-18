@@ -36,6 +36,7 @@
 %Line spacing between paragraphs
 \setlength{\parskip}{6pt}
 
+
 \begin{document}
 
 \title{\Module\\\Uebung}
@@ -50,7 +51,75 @@
 
 \subsubsection*{(a)}
 
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
+Sender(){
+	//DO SOMETHING
+	Receiver rc = new Receiver();
+	
+	rc.sendMessage(Message msg, int msg_id);
+	Time startTime = System.currentTime();
+	while(True){
+		Message reply, int reply_id = rc.receiveMessage();
+		timeDiff = System.currentTime() - startTime;
+		if ((reply == "ok") AND (reply_id == msg_ID)) OR (timeDiff >= TIMEOUT){
+			break;
+		}
+	}
+	//CONTINUE DOING SOMETHING
+}
+
+Receiver(){
+	Sender sr = new Sender();
+	while(True){
+	 	Message msg, int msg_id = sr.receiveMessage();
+	 	if msg.isFullyReceived(){
+			sr.sendMessage(new Message("ok"), msg_id);
+		} else {
+			sr.sendMessage(new Message("fail"), msg_id);
+		}
+	}
+}
+\end{lstlisting}
+
+
 \subsubsection*{(b)}
+
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
+Sender(){
+	//DO SOMETHING
+	MessageBuffer mb = new MessageBuffer();
+	Acknowledgement ack = mb.sendMessage(Message msg);
+	ack.wait();
+	//CONTINUE DOING SOMETHING
+}
+
+MessageBuffer(){
+	Receiver rc = new Receiver();
+	Sender sr = new Sender();
+	
+	while(True){
+		Message msg = sr.receiveMessage();
+		if (msg.isFullyReceived()){
+			receiveAck.notify();
+		}
+		
+		Acknowledgement sendAck = sr.sendMessage(Message msg);
+		sendAck.wait();
+	}
+}
+
+Receiver(){
+	MessageBuffer mb = new MessageBuffer();
+	while(True){
+		Message msg = mb.receiveMessage();
+		if (msg.isFullyReceived())
+			ack.notify();
+		}
+	}
+}
+\end{lstlisting}
+
+
 
 \subsubsection*{(c)}
 
