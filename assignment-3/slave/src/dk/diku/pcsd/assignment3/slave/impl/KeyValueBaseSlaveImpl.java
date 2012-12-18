@@ -1,5 +1,6 @@
 package dk.diku.pcsd.assignment3.slave.impl;
 
+import dk.diku.pcsd.assignment3.impl.IndexImpl;
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.impl.KeyValueBaseReplicaImpl;
 import dk.diku.pcsd.assignment3.impl.ValueListImpl;
@@ -13,9 +14,14 @@ public class KeyValueBaseSlaveImpl extends KeyValueBaseReplicaImpl implements Ke
 	@Override
 	public void logApply(LogRecord record) {
 		try{
-			record.invoke(this);
+			if (record.getMethodName().equals("init")){
+				record.invoke(this);
+			}else{
+				record.invoke(IndexImpl.getInstance());
+			}
+			
 		}catch(Exception e){
-			// TODO do nothing ??
+			e.printStackTrace();
 		}
 	}
 

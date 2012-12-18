@@ -12,9 +12,11 @@ import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
+import dk.diku.pcsd.keyvaluebase.exceptions.ServiceAlreadyConfiguredException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceAlreadyInitializedException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceInitializingException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceNotInitializedException;
+import dk.diku.pcsd.keyvaluebase.interfaces.Configuration;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
@@ -24,7 +26,7 @@ public class KeyValueBaseMasterImplService extends KeyValueBaseMasterImpl{
 	
 	public KeyValueBaseMasterImplService() {
 		super();
-	}
+	} 
 	
 	@Override
 	@WebMethod
@@ -85,6 +87,13 @@ public class KeyValueBaseMasterImplService extends KeyValueBaseMasterImpl{
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> mappings)
 			throws IOException, ServiceNotInitializedException {
 		super.bulkPut(mappings);
+	}
+	
+	@Override
+	@WebMethod
+	public void config(Configuration conf)
+			throws ServiceAlreadyConfiguredException {
+		super.config(conf);
 	}
 
 }
