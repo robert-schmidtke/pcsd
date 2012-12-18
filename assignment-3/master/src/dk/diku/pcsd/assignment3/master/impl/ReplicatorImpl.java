@@ -3,8 +3,10 @@ package dk.diku.pcsd.assignment3.master.impl;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Future;
 
+import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplService;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 
@@ -15,6 +17,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
  */
 
 public class ReplicatorImpl extends LoggerImpl implements Replicator {
+	
+	private List<KeyValueBaseSlaveImplService> slaves;
 	
 	private static ReplicatorImpl instance;
 	
@@ -87,4 +91,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 		}
 	}
 
+	public void setSlaves(List<KeyValueBaseSlaveImplService> s){
+		this.slaves = s;
+	}
 }
