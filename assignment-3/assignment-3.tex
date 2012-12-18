@@ -48,22 +48,6 @@
 \subsection*{Question 1}
 \label{sec:eq1}
 
-\subsection*{Question 2}
-\label{sec:eq2}
-
-\subsection*{Question 3}
-\label{sec:eq3}
-
-\subsection*{Question 4}
-\label{sec:eq4}
-
-\section*{Programming Task} 
-\label{sec:programming}
-
-\subsection*{Question 1}
-\label{sec:pq1}
-
-
 \subsubsection*{(a)}
 
 \subsubsection*{(b)}
@@ -71,18 +55,20 @@
 \subsubsection*{(c)}
 
 \subsection*{Question 2}
-\label{sec:pq2}
+\label{sec:eq2}
+\subsubsection*{Exokernel}
 
-\begin{enumerate}
-  \item Exokernel:
-  \item Encrypted data transmission:[fleqn]
-\end{enumerate}
+Typically Operation Systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. Typical Operation Systems hence violate the end-to-end principle, which asks for high control over application specific decisions at the application level. By limiting applications, it is in a sense application specific, and violates the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). These as shown follows the end-to-end principle, as they allow applications for more access to the hardware, and hence making it less application specific. For such a design speaks that it on the one hand side gives the application more freedom and and more functionality, and one the other hand allows for improved performance (\cite{Engler1995} speak of possible improvements up to 45\%). Against this design speaks that by being more application specific, such a design is also more specific to a certain physical platform, as hardware abstraction layers are diminished. Also does more freedom mean more responsibilities for the application, which if certain things are not or badly handled do not lead to expected improvements.
+
+\subsubsection*{Encrypted data transmission}
+
+Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principles by that it does not care about application specific details (e.g. if it transmits an e-mail, web pages, files or voice-over-IP), but does only provide with the secure transmission for the application. Alternatively the necessary steps such as key exchange, entity and message authentication, and en- and decryption could be implemented at an application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives to opportunity to possible intruders, as the application gives the \emph{plain} data into this lower "channel" (see \cite{Saltzer1984}).
 
 \subsection*{Question 3}
-\label{sec:pq3}
+\label{sec:eq3}
 
 \subsubsection*{(a)}
-The probability that the daisy chain is connecting all buildings is 100\% minus the twice the probability that one link fails and one is available, minus the probability that both fail, so: 
+The probability that the daisy chain is connecting all buildings is 100\% minus twice the probability that one link fails and one is available, minus the probability that both fail, so: 
 \begin{align*}
 P_{availability} &= 1-2(1-p)p - p^2 = 1-2p + p^2 \\
 &= (1-p)^2
@@ -106,6 +92,21 @@ P_{Fully} &= 1 + 2p^3 - 3p^2 = 1 + 2(0.0001)^3-3(0.0001)^2 \approx 0.99999997 \\
 We hence choose the fully connected network.
 
 \subsection*{Question 4}
+\label{sec:eq4}
+
+\section*{Programming Task} 
+\label{sec:programming}
+
+\subsection*{Question 1}
+\label{sec:pq1}
+
+\subsection*{Question 2}
+\label{sec:pq2}
+
+\subsection*{Question 3}
+\label{sec:pq3}
+
+\subsection*{Question 4}
 \label{sec:pq4}
 
 \subsection*{Question 5}
@@ -117,7 +118,12 @@ We hence choose the fully connected network.
 \subsection*{Question 7}
 \label{sec:pq7}
  
+
 \begin{thebibliography}{1}
+
+\bibitem[Saltzer1984]{Saltzer1984} Saltzer, Jerome H., David P. Reed, and David D. Clark. "End-to-end arguments in system design." ACM Transactions on Computer Systems (TOCS) 2, no. 4 (1984): 277-288.
+
+\bibitem[Engler1995]{Engler1995} Engler, Dawson R., and M. Frans Kaashoek. "Exokernel: An operating system architecture for application-level resource management." In ACM SIGOPS Operating Systems Review, vol. 29, no. 5, pp. 251-266. ACM, 1995.
 
 \end{thebibliography}
 
