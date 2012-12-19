@@ -51,7 +51,7 @@
 
 \subsubsection*{(a)}
 
-If only asynchronous communication primitives are available, then the synchronisation must be implemented yourself. This can e.g. be done by sending the message, and only continuing until a reply was received of the receiver of the message. This could even be pushed further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
+If only asynchronous communication primitives are available, then the synchronisation must be implemented yourself. This can e.g. be done by sending the message, and only continuing until a reply of the receiver of the message was received (an acknowledgement). This could even be taken further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
 
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
 Sender(){
@@ -64,6 +64,7 @@ Sender(){
 		Message reply, int reply_id = rc.receiveMessage();
 		timeDiff = System.currentTime() - startTime;
 		if ((reply == "ok") AND (reply_id == msg_ID)) OR (timeDiff >= TIMEOUT){
+			//HANDLE THIS CASE
 			break;
 		}
 	}
@@ -124,7 +125,7 @@ Receiver(){
 \end{lstlisting}
 
 \subsubsection*{(c)}
-Persistent asynchronous communication could be used by having a message server. The sender would know the address of the message server and send the message to the message server (using the \texttt{put()} method). The message server would keep the message until the receiver retrieves the message by using the \texttt{get()} method. A simplified example API of such a message server is shown below:
+Persistent asynchronous communication could be implemented by having a message server. The sender would know the address of the message server and send the message to the message server (using the \texttt{put()} method). The message server would keep the message until the receiver retrieves the message by using the \texttt{get()} method. A simplified example API of such a message server is shown below:
 
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true,mathescape]
 MessageServer(){
@@ -139,11 +140,11 @@ MessageServer(){
 \label{sec:eq2}
 \subsubsection*{Exokernel}
 
-Typically Operation Systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. Typical Operation Systems hence violate the end-to-end principle, which asks for high control over application specific decisions at the application level. By limiting applications, it is in a sense application specific, and violates the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). These as shown follows the end-to-end principle, as they allow applications for more access to the hardware, and hence making it less application specific. For such a design speaks that it on the one hand side gives the application more freedom and and more functionality, and one the other hand allows for improved performance (\cite{Engler1995} speak of possible improvements up to 45\%). Against this design speaks that by being more application specific, such a design is also more specific to a certain physical platform, as hardware abstraction layers are diminished. Also does more freedom mean more responsibilities for the application, which if certain things are not or badly handled do not lead to expected improvements.
+Typically Operation Systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. The end-to-end principle asks for high control over application specific decisions at the application level. By limiting applications, it is in a sense application specific, and thus violates the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). Exokernels therefore attempt to closer adhere to the end-to-end principle, as they allow applications for more access to the hardware, and hence making it less application specific. For such a design speaks that it on the one hand side gives the application more freedom and and more functionality, and one the other hand allows for improved performance (\cite{Engler1995} speak of possible performance improvements up to 45\%). Against this design speaks that by being more application specific, such a design is also more specific to a certain physical platform, as hardware abstraction layers are diminished. Also does more freedom mean more responsibilities for the application, which if certain things are not or badly handled do not lead to expected improvements.
 
 \subsubsection*{Encrypted data transmission}
 
-Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principles by that it does not care about application specific details (e.g. if it transmits an e-mail, web pages, files or voice-over-IP), but does only provide with the secure transmission for the application. Alternatively the necessary steps such as key exchange, entity and message authentication, and en- and decryption could be implemented at an application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives to opportunity to possible intruders, as the application gives the \emph{plain} data into this lower "channel" (see \cite{Saltzer1984}).
+Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principles by that it does not care about application specific details (e.g. if it transmits an e-mail, web pages, files or voice-over-IP), but does only provide with the secure transmission for the application. Alternatively the necessary steps such as key exchange, entity and message authentication, and en- and decryption could be implemented at an application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives no opportunity to possible intruders, as the application gives the \emph{plain} data into this lower "channel" (see \cite{Saltzer1984}).
 
 \subsection*{Question 3}
 \label{sec:eq3}
@@ -175,9 +176,9 @@ We hence choose the fully connected network.
 \subsection*{Question 4}
 \label{sec:eq4}
 
-The two-phase commit protocol (2PC) is a blocking protocol, by that it blocks each node until a commit or roll-back is received. If for instance the coordinator fails after a participant sent an agreement, the participant will block (and with that keep any objects such as tables locked) until the coordinator is recovered and resumes the operation. Also if the coordinator waits for another participant to return an okay, but this participant fails, the coordinator would wait and all other participants would be left blocking (but this could be resolved by implementing a time-out in the coordinator after that the coordinator sends an abort to the remaining participants). 
+The two-phase commit protocol (2PC) is a blocking protocol, by that it blocks each node until a commit or roll-back is received. If for instance the coordinator fails after a participant sent an agreement, the participant will block (and with that keep any objects such as tables locked) until the coordinator is recovered and resumes the operation. Also if the coordinator waits for another participant to return an okay, but this participant fails, the coordinator would wait and all other participants would be left blocking (but this case could be resolved by implementing a time-out in the coordinator after that the coordinator sends an abort to the remaining participants). 
 
-The three-phase commit protocol (3PC) prevents delay due to blocking by introducing the extra step of sending the \emph{preCommit}. If the coordinator fails before sending the \emph{preCommit} (the participant is in the uncertain period), the participant will assume an abort after some time-out, will roll-back and can release all locks and continue with other transactions. In the 2PC that was not possible, as it could be the case that the coordinator already send a \emph{doCommit} to some participants, and then failed. If then the other participants implemented a time-out and aborted, the system were not in a consistent state, as some nodes committed the transaction and others aborted it.
+The three-phase commit protocol (3PC) prevents delay due to blocking by introducing the extra step of sending the \emph{preCommit}. If the coordinator fails before sending the \emph{preCommit} (the participant is in the "uncertain" period), the participant will assume an abort after some time-out, will roll-back and can release all locks and continue with other transactions. In the 2PC that was not possible, as it could be the case that the coordinator already send a \emph{doCommit} to some participants, and then failed. If then the other participants implemented a time-out and aborted, the system were not in a consistent state, as some nodes committed the transaction and others aborted it.
 
 \section*{Programming Task} 
 \label{sec:programming}
