@@ -19,7 +19,7 @@ import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplServiceService;
 import dk.diku.pcsd.assignment3.slave.impl.Pair;
 import dk.diku.pcsd.assignment3.slave.impl.TimestampPair;
 
-public class Test {
+public class TestReplication {
 	public static void main(String[] args){
 		KeyValueBaseMasterImplServiceService kvbiss = new KeyValueBaseMasterImplServiceService();
 		KeyValueBaseMasterImplService kvbis = kvbiss.getKeyValueBaseMasterImplServicePort();

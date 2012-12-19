@@ -252,11 +252,13 @@ public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueLis
 	}
 	
 	private Replica getReplica(){
-		if (currentReplica > slaves.size()){
-			currentReplica++;
+		if (currentReplica >= slaves.size()){
+			currentReplica = (currentReplica + 1) % (slaves.size()+1);
 			return new Replica(master);
 		}else{
-			return new Replica(slaves.get(currentReplica++));
+			int index = currentReplica;
+			currentReplica = (currentReplica + 1) % (slaves.size()+1);
+			return new Replica(slaves.get(index));
 		}
 	}
 
