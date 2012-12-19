@@ -51,6 +51,8 @@
 
 \subsubsection*{(a)}
 
+If only asynchronous communication primitives are available, then the synchronisation must be implemented yourself. This can e.g. be done by sending the message, and only continuing until a reply was received of the receiver of the message. This could even be pushed further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
+
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
 Sender(){
 	//DO SOMETHING
@@ -83,6 +85,8 @@ Receiver(){
 
 
 \subsubsection*{(b)}
+
+If you have only synchronous primitives available, but want to implement asynchronous communication (between sender and receiver), then this can be reached by having one (or more) proxies in between. Then the sender and receiver could communicate synchronously with their adjacent proxy, but between the sender and receiver there is an asynchronous communication. An example in pseudo-code is below, where the proxy is implemented through the function MessageBuffer():
 
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
 Sender(){
@@ -119,9 +123,17 @@ Receiver(){
 }
 \end{lstlisting}
 
-
-
 \subsubsection*{(c)}
+Persistent asynchronous communication could be used by having a message server. The sender would know the address of the message server and send the message to the message server (using the \texttt{put()} method). The message server would keep the message until the receiver retrieves the message by using the \texttt{get()} method. A simplified example API of such a message server is shown below:
+
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
+MessageServer(){
+void put(Message message)
+Message get()
+int checkForMessages()
+}
+\end{lstlisting}
+
 
 \subsection*{Question 2}
 \label{sec:eq2}
