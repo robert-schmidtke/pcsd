@@ -8,7 +8,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 
 public class CheckpointerImpl implements Checkpointer {
 	
-	private static final long INTERVAL = 60000;
+	private static final long INTERVAL = 20000;
 	
 	private boolean execute;
 	

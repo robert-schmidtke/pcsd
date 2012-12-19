@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.impl.ValueImpl;
@@ -50,13 +51,28 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 		execute = true;
 		initOutputStream();
 		long lastRun = System.currentTimeMillis();
+
+		// remember processed log requests so we can signal them later
+		LinkedList<LogQueueEntry<Date>> signalQueue = new LinkedList<LogQueueEntry<Date>>();
 		while (execute) {
-			if (logQueue.size() >= K
-					|| (logQueue.size() > 0 && System.currentTimeMillis()
-							- lastRun >= TIMEOUT)) {
-				Iterator<LogQueueEntry<Date>> it = logQueue.iterator();
-				while (it.hasNext()) {
-					LogQueueEntry<Date> entry = it.next();
+			LogQueueEntry<Date> next;
+			try {
+				// wait for log request to appear
+				next = logQueue.poll(10L, TimeUnit.SECONDS);
+			} catch (InterruptedException e1) {
+				next = null;
+			}
+			
+			if(next != null)
+				signalQueue.add(next);
+			
+			// if we have reached a certain amount of requests
+			// or some time has passed
+			// then write the log records
+			if (signalQueue.size() >= K ||
+					(signalQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
+				
+				for(LogQueueEntry<Date> entry : signalQueue) {
 					try {
 						out.writeObject(entry.record);
 					} catch (IOException e) {
@@ -70,9 +86,9 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					throw new RuntimeException(e.getMessage(), e);
 				}
 
-				while (logQueue.size() > 0) {
+				while (signalQueue.size() > 0) {
 					for (KeyValueBaseSlaveImplService s : slaves) {
-						LogRecord r = logQueue.peek().record;
+						LogRecord r = signalQueue.peek().record;
 						dk.diku.pcsd.assignment3.slave.impl.LogRecord rec = new dk.diku.pcsd.assignment3.slave.impl.LogRecord();
 						rec.setClassName(r.getSrcClass());
 						dk.diku.pcsd.assignment3.slave.impl.TimestampLog ts = new dk.diku.pcsd.assignment3.slave.impl.TimestampLog();
@@ -88,7 +104,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 							e.printStackTrace();
 						}
 					}
-					logQueue.poll().future.signalAll(new Date());
+					signalQueue.poll().future.signalAll(new Date());
 				}
 
 				lastRun = System.currentTimeMillis();

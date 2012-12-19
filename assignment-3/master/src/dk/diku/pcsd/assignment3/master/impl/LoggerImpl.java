@@ -10,7 +10,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -25,7 +24,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.FutureLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
-public class LoggerImpl implements Logger {
+public abstract class LoggerImpl implements Logger {
 	
 	protected static final int K = 1, TIMEOUT = 0;
 		
@@ -70,7 +69,7 @@ public class LoggerImpl implements Logger {
 		out.close();
 		super.finalize();
 	}
-
+/*
 	@Override
 	public void run() {
 		execute = true;
@@ -122,7 +121,7 @@ public class LoggerImpl implements Logger {
 			// maybe it was flushed and closed before
 		}
 	}
-	
+*/	
 	public void stop() {
 		execute = false;
 	}
