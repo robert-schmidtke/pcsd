@@ -27,6 +27,7 @@ import dk.diku.pcsd.keyvaluebase.exceptions.ServiceNotInitializedException;
 import dk.diku.pcsd.keyvaluebase.interfaces.Configuration;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseMaster;
+import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseReplica;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
@@ -43,7 +44,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	private ReplicatorImpl replicator;
 
 	private boolean logging = true, recovering = false;
-	
+
 	List<KeyValueBaseSlaveImplService> slaves;
 
 	public KeyValueBaseMasterImpl() {
@@ -245,9 +246,15 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	 */
 	private void log(String methodName, Object... params) {
 		try {
-			replicator
-					.logRequest(new LogRecord(getClass(), methodName, params))
-					.get();
+			if (methodName.equals("init")) {
+				replicator.logRequest(
+						new LogRecord(KeyValueBaseReplica.class,
+								methodName, params)).get();
+			} else {
+				replicator.logRequest(
+						new LogRecord(IndexImpl.class, methodName, params))
+						.get();
+			}
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -256,18 +263,29 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	@Override
 	public void config(Configuration conf)
 			throws ServiceAlreadyConfiguredException {
+		if (slaves != null) {
+			throw new ServiceAlreadyConfiguredException();
+		}
+
 		slaves = new ArrayList<KeyValueBaseSlaveImplService>();
-		
-		for (int i = 0; i<conf.slaves.length; i++){
-			String current = conf.slaves[i];
+
+		for (String current : conf.getSlaves()) {
 			try {
-				KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(new URL(current), new QName(current));
+				URL baseUrl;
+				baseUrl = dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplServiceService.class
+						.getResource(".");
+				URL url = new URL(baseUrl, current);
+				QName qn = new QName(
+						"http://impl.slave.assignment3.pcsd.diku.dk/",
+						"KeyValueBaseSlaveImplServiceService");
+				KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(
+						url, qn);
 				slaves.add(service.getKeyValueBaseSlaveImplServicePort());
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 		replicator.setSlaves(slaves);
 
 	}

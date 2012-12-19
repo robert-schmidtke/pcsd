@@ -1,5 +1,7 @@
 package dk.diku.pcsd.assignment3.impl;
 
+import javax.xml.bind.annotation.XmlElement;
+
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
@@ -10,6 +12,11 @@ public class TimestampPair extends Pair<TimestampLog, ValueListImpl> {
 	 */
 	private static final long serialVersionUID = 2297814542470880237L;
 
+	@XmlElement
+	private TimestampLog k;
+	@XmlElement
+	private ValueListImpl v;
+	
 	public TimestampPair(TimestampLog t, ValueListImpl v) {
 		this.k = t;
 		this.v = v;
@@ -21,7 +28,7 @@ public class TimestampPair extends Pair<TimestampLog, ValueListImpl> {
 	
 	@Override
 	public TimestampLog getKey() {
-		return super.getKey();
+		return k;
 	}
 	
 	public void setKey(TimestampLog k){
@@ -34,7 +41,7 @@ public class TimestampPair extends Pair<TimestampLog, ValueListImpl> {
 	
 	@Override
 	public ValueListImpl getValue() {
-		return super.getValue();
+		return v;
 	}
 
 	@Override

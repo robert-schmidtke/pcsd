@@ -27,7 +27,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 	protected boolean initialized = false, initializing = false;
 	
 	protected KeyValueBaseReplicaImpl(){
-		// TODO
+		index=IndexImpl.getInstance();
 	}
 	
 	@Override

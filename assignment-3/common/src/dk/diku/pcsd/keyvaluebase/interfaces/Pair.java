@@ -15,26 +15,14 @@ public abstract class Pair<K, V> implements Comparable<Pair<K,V>>, Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 6120085642616703347L;
-	@XmlElement
-	protected K k;
-	@XmlElement
-	protected V v;
 	
 	public Pair()
 	{
 	}
 	
-	public Pair (K k, V v){
-		this.k = k;
-		this.v = v;
-	}
 	
-	public K getKey(){
-		return k;
-	}
+	public abstract K getKey();
 	
-	public V getValue(){
-		return v;
-	}
+	public abstract V getValue();
 	
 }
