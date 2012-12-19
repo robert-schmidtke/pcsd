@@ -57,68 +57,72 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 			try {
 				// wait for log request to appear
 				next = logQueue.poll(10L, TimeUnit.SECONDS);
-			} catch (InterruptedException e1) {
-				next = null;
-			}
 			
-			if(next != null)
-				signalQueue.add(next);
-			
-			// if we have reached a certain amount of requests
-			// or some time has passed
-			// then write the log records
-			if (signalQueue.size() >= K ||
-					(signalQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
+				if(next != null)
+					signalQueue.add(next);
 				
-				for(LogQueueEntry<Date> entry : signalQueue) {
+				// if we have reached a certain amount of requests
+				// or some time has passed
+				// then write the log records
+				if (signalQueue.size() >= K ||
+						(signalQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
+					
+					for(LogQueueEntry<Date> entry : signalQueue) {
+						try {
+							out.writeObject(entry.record);
+						} catch (IOException e) {
+							throw new RuntimeException(e.getMessage(), e);
+						}
+					}
+	
 					try {
-						out.writeObject(entry.record);
+						out.flush();
 					} catch (IOException e) {
 						throw new RuntimeException(e.getMessage(), e);
 					}
-				}
-
-				try {
-					out.flush();
-				} catch (IOException e) {
-					throw new RuntimeException(e.getMessage(), e);
-				}
-
-				while (signalQueue.size() > 0) {
-					for (KeyValueBaseSlaveImplService s : slaves) {
+	
+					while (signalQueue.size() > 0) {
 						LogRecord r = signalQueue.peek().record;
-						dk.diku.pcsd.assignment3.slave.impl.LogRecord rec = new dk.diku.pcsd.assignment3.slave.impl.LogRecord();
-						rec.setClassName(r.getSrcClass());
-						dk.diku.pcsd.assignment3.slave.impl.TimestampLog ts = new dk.diku.pcsd.assignment3.slave.impl.TimestampLog();
-						ts.setInd(r.getLSN().getInd());
-						rec.setLSN(ts);
-						rec.setMethodName(r.getMethodName());
-						rec.setNumberParam(r.getNumParams());
-						rec.getParams().addAll(Arrays.asList(translate(r.getParams())));
-
-						try {
-							s.logApply(rec);
-						} catch (Exception e) {
-							e.printStackTrace();
+						// do not replicate configure log requests
+						if(!r.getMethodName().equals("config")) {
+							dk.diku.pcsd.assignment3.slave.impl.LogRecord rec = new dk.diku.pcsd.assignment3.slave.impl.LogRecord();
+							rec.setClassName(r.getSrcClass());
+							dk.diku.pcsd.assignment3.slave.impl.TimestampLog ts = new dk.diku.pcsd.assignment3.slave.impl.TimestampLog();
+							ts.setInd(r.getLSN().getInd());
+							rec.setLSN(ts);
+							rec.setMethodName(r.getMethodName());
+							rec.setNumberParam(r.getNumParams());
+							rec.getParams().addAll(Arrays.asList(translate(r.getParams())));
+							
+							for (KeyValueBaseSlaveImplService s : slaves) {
+								try {
+									s.logApply(rec);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
 						}
+						signalQueue.poll().future.signalAll(new Date());
 					}
-					signalQueue.poll().future.signalAll(new Date());
+	
+					lastRun = System.currentTimeMillis();
 				}
-
-				lastRun = System.currentTimeMillis();
-			}
-
-			if (truncate) {
-				try {
-					out.flush();
-					out.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e.getMessage(), e);
+	
+				if (truncate) {
+					try {
+						out.flush();
+						out.close();
+					} catch (IOException e) {
+						throw new RuntimeException(e.getMessage(), e);
+					}
+	
+					logFile.delete();
+					initOutputStream();
+					truncate = false;
 				}
-
-				logFile.delete();
-				initOutputStream();
-				truncate = false;
+			} catch (InterruptedException e1) {
+				// replicator got interrupted
+				execute = false;
 			}
 		}
 
@@ -136,19 +140,14 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 	
 	private Object[] translate(Object[] in){
 		Object[] result = new Object[in.length];
-		System.out.println("in comes "+in.length);
-		for (int i = 0; i<in.length; i++)
-			System.out.println(in[i]);
 		
 		for (int i=0; i<in.length; i++){
 			if (in[i] instanceof KeyImpl){
-				System.out.println("is keyimpl");
 				KeyImpl current = (KeyImpl)in[i];
 				dk.diku.pcsd.assignment3.slave.impl.KeyImpl k = new dk.diku.pcsd.assignment3.slave.impl.KeyImpl();
 				k.setKey(current.getKey());
 				result[i] = k;
 			}else if (in[i] instanceof ValueListImpl){
-				System.out.println("is valuelistimpl");
 				ValueListImpl current = (ValueListImpl)in[i];
 				dk.diku.pcsd.assignment3.slave.impl.ValueListImpl vl = new dk.diku.pcsd.assignment3.slave.impl.ValueListImpl();
 				for (ValueImpl vin : current.getValueList()){
@@ -158,14 +157,10 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 				}
 				result[i] = vl;
 			}else{
-				System.out.println("is other: "+in[i].getClass());
 				result[i] = in[i];
 			}
 			System.out.flush();
 		}
-		System.out.println("result is ");
-		for (int i = 0; i<in.length; i++)
-			System.out.println(result[i]);
 		return result;
 	}
 }
