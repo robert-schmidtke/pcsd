@@ -1,6 +1,7 @@
 package dk.diku.pcsd.assignment3.master.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import dk.diku.pcsd.assignment3.impl.ValueImpl;
 import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplService;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
+import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 
 /**
@@ -22,7 +24,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 
 public class ReplicatorImpl extends LoggerImpl implements Replicator {
 
-	private List<KeyValueBaseSlaveImplService> slaves;
+	private List<KeyValueBaseSlaveImplService> slaves = new ArrayList<KeyValueBaseSlaveImplService>();
 
 	private static ReplicatorImpl instance;
 
@@ -141,6 +143,27 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					vl.getValueList().add(v);
 				}
 				result[i] = vl;
+			}else if (in[i] instanceof List<?>){
+				// has to be List<Pair<KeyImpl, ValueListImpl>>
+				List<?> listIn = (List<?>) in[i];
+				List<dk.diku.pcsd.assignment3.slave.impl.Pair> list = new ArrayList<dk.diku.pcsd.assignment3.slave.impl.Pair>();
+				
+				for (Object o : listIn){
+					Pair<KeyImpl, ValueListImpl> pIn = (Pair<KeyImpl, ValueListImpl>) o;
+					dk.diku.pcsd.assignment3.slave.impl.PairImpl p = new dk.diku.pcsd.assignment3.slave.impl.PairImpl();
+					dk.diku.pcsd.assignment3.slave.impl.KeyImpl k = new dk.diku.pcsd.assignment3.slave.impl.KeyImpl();
+					k.setKey(pIn.getKey().getKey());
+					p.setK(k);
+					dk.diku.pcsd.assignment3.slave.impl.ValueListImpl vl = new dk.diku.pcsd.assignment3.slave.impl.ValueListImpl();
+					for (ValueImpl vin : pIn.getValue().getValueList()){
+						dk.diku.pcsd.assignment3.slave.impl.ValueImpl v = new dk.diku.pcsd.assignment3.slave.impl.ValueImpl();
+						v.setValue(vin.getValue());
+						vl.getValueList().add(v);
+					}
+					p.setV(vl);
+					list.add(p);
+				}
+				result[i] = list;
 			}else{
 				System.out.println("is other: "+in[i].getClass());
 				result[i] = in[i];
