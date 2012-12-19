@@ -17,7 +17,7 @@ import javax.xml.ws.WebServiceFeature;
  * Generated source version: 2.1
  * 
  */
-@WebServiceClient(name = "KeyValueBaseSlaveImplServiceService", targetNamespace = "http://impl.slave.assignment3.pcsd.diku.dk/", wsdlLocation = "http://localhost:8080/pcsd-assignment3-slave/keyvaluebaseslave?wsdl")
+@WebServiceClient(name = "KeyValueBaseSlaveImplServiceService", targetNamespace = "http://impl.slave.assignment3.pcsd.diku.dk/", wsdlLocation = "http://localhost:8080/slave/keyvaluebaseslave?wsdl")
 public class KeyValueBaseSlaveImplServiceService
     extends Service
 {
@@ -30,9 +30,9 @@ public class KeyValueBaseSlaveImplServiceService
         try {
             URL baseUrl;
             baseUrl = dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplServiceService.class.getResource(".");
-            url = new URL(baseUrl, "http://localhost:8080/pcsd-assignment3-slave/keyvaluebaseslave?wsdl");
+            url = new URL(baseUrl, "http://localhost:8080/slave/keyvaluebaseslave?wsdl");
         } catch (MalformedURLException e) {
-            logger.warning("Failed to create URL for the wsdl Location: 'http://localhost:8080/pcsd-assignment3-slave/keyvaluebaseslave?wsdl', retrying as a local file");
+            logger.warning("Failed to create URL for the wsdl Location: 'http://localhost:8080/slave/keyvaluebaseslave?wsdl', retrying as a local file");
             logger.warning(e.getMessage());
         }
         KEYVALUEBASESLAVEIMPLSERVICESERVICE_WSDL_LOCATION = url;

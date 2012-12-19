@@ -4,6 +4,8 @@ package dk.diku.pcsd.assignment3.slave.impl;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
 
 /**
