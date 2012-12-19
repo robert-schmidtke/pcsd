@@ -89,17 +89,10 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 				while (signalQueue.size() > 0) {
 					for (KeyValueBaseSlaveImplService s : slaves) {
 						LogRecord r = signalQueue.peek().record;
-						dk.diku.pcsd.assignment3.slave.impl.LogRecord rec = new dk.diku.pcsd.assignment3.slave.impl.LogRecord();
-						rec.setClassName(r.getSrcClass());
-						dk.diku.pcsd.assignment3.slave.impl.TimestampLog ts = new dk.diku.pcsd.assignment3.slave.impl.TimestampLog();
-						ts.setInd(r.getLSN().getInd());
-						rec.setLSN(ts);
-						rec.setMethodName(r.getMethodName());
-						rec.setNumberParam(r.getNumParams());
-						rec.getParams().addAll(Arrays.asList(translate(r.getParams())));
+						
 
 						try {
-							s.logApply(rec);
+							s.logApply(r);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -136,59 +129,5 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 		this.slaves = s;
 	}
 	
-	private Object[] translate(Object[] in){
-		Object[] result = new Object[in.length];
-		System.out.println("in comes "+in.length);
-		for (int i = 0; i<in.length; i++)
-			System.out.println(in[i]);
-		
-		for (int i=0; i<in.length; i++){
-			if (in[i] instanceof KeyImpl){
-				System.out.println("is keyimpl");
-				KeyImpl current = (KeyImpl)in[i];
-				dk.diku.pcsd.assignment3.slave.impl.KeyImpl k = new dk.diku.pcsd.assignment3.slave.impl.KeyImpl();
-				k.setKey(current.getKey());
-				result[i] = k;
-			}else if (in[i] instanceof ValueListImpl){
-				System.out.println("is valuelistimpl");
-				ValueListImpl current = (ValueListImpl)in[i];
-				dk.diku.pcsd.assignment3.slave.impl.ValueListImpl vl = new dk.diku.pcsd.assignment3.slave.impl.ValueListImpl();
-				for (ValueImpl vin : current.getValueList()){
-					dk.diku.pcsd.assignment3.slave.impl.ValueImpl v = new dk.diku.pcsd.assignment3.slave.impl.ValueImpl();
-					v.setValue(vin.getValue());
-					vl.getValueList().add(v);
-				}
-				result[i] = vl;
-			}else if (in[i] instanceof List<?>){
-				// has to be List<Pair<KeyImpl, ValueListImpl>>
-				List<?> listIn = (List<?>) in[i];
-				List<dk.diku.pcsd.assignment3.slave.impl.Pair> list = new ArrayList<dk.diku.pcsd.assignment3.slave.impl.Pair>();
-				
-				for (Object o : listIn){
-					Pair<KeyImpl, ValueListImpl> pIn = (Pair<KeyImpl, ValueListImpl>) o;
-					dk.diku.pcsd.assignment3.slave.impl.PairImpl p = new dk.diku.pcsd.assignment3.slave.impl.PairImpl();
-					dk.diku.pcsd.assignment3.slave.impl.KeyImpl k = new dk.diku.pcsd.assignment3.slave.impl.KeyImpl();
-					k.setKey(pIn.getKey().getKey());
-					p.setK(k);
-					dk.diku.pcsd.assignment3.slave.impl.ValueListImpl vl = new dk.diku.pcsd.assignment3.slave.impl.ValueListImpl();
-					for (ValueImpl vin : pIn.getValue().getValueList()){
-						dk.diku.pcsd.assignment3.slave.impl.ValueImpl v = new dk.diku.pcsd.assignment3.slave.impl.ValueImpl();
-						v.setValue(vin.getValue());
-						vl.getValueList().add(v);
-					}
-					p.setV(vl);
-					list.add(p);
-				}
-				result[i] = list;
-			}else{
-				System.out.println("is other: "+in[i].getClass());
-				result[i] = in[i];
-			}
-			System.out.flush();
-		}
-		System.out.println("result is ");
-		for (int i = 0; i<in.length; i++)
-			System.out.println(result[i]);
-		return result;
-	}
+	
 }
