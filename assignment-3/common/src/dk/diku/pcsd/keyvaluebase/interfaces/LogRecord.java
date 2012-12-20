@@ -95,10 +95,11 @@ public class LogRecord implements Serializable {
 		lastTimestamp.inc();
 
 		if (lastTimestamp.compareTo(LSN) != 0) {
-			throw new RuntimeException(
-					"Something has gone horribly wrong! Last timestamp after update from logrecord: "
-							+ lastTimestamp
-							+ ", invoked record with timestamp " + LSN);
+			lastTimestamp.setInd(LSN.getInd());
+//			throw new RuntimeException(
+//					"Something has gone horribly wrong! Last timestamp after update from logrecord: "
+//							+ lastTimestamp
+//							+ ", invoked record with timestamp " + LSN);
 		}
 
 		return m.invoke(src, this.params);
