@@ -8,7 +8,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 
 public class CheckpointerImpl implements Checkpointer {
 	
-	private static final long INTERVAL = 20000;
+	private static final long INTERVAL = 600000;
 	
 	private boolean execute;
 	
@@ -36,19 +36,15 @@ public class CheckpointerImpl implements Checkpointer {
 		while(execute) {
 			try {
 				Thread.sleep(INTERVAL);
+				keyValueBase.quiesce();
+				StoreImpl.getInstance().flush();
+				ReplicatorImpl.getInstance().truncate();
+				keyValueBase.resume();
 			} catch (InterruptedException e) {
-				throw new RuntimeException(e.getMessage(), e);
+				// checkpointer got interrupted
+				execute = false;
 			}
-			
-			keyValueBase.quiesce();
-			StoreImpl.getInstance().flush();
-			ReplicatorImpl.getInstance().truncate();
-			keyValueBase.resume();
 		}
-	}
-	
-	public void stop() {
-		execute = false;
 	}
 
 }
