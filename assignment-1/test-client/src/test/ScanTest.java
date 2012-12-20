@@ -8,12 +8,12 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import dk.diku.pcsd.assignment1.impl.KeyImpl;
-import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplService;
-import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplServiceService;
-import dk.diku.pcsd.assignment1.impl.StringLengthPredicate;
-import dk.diku.pcsd.assignment1.impl.ValueImpl;
-import dk.diku.pcsd.assignment1.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplService;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplServiceService;
+import dk.diku.pcsd.assignment3.impl.StringLengthPredicate;
+import dk.diku.pcsd.assignment3.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 
 public class ScanTest {
 	
@@ -25,9 +25,9 @@ public class ScanTest {
 	@BeforeClass
 	public static void setup() {
 		try {
-			kvbis.init(null);
+			kvbis.init("");
 		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage(), e);
+			e.printStackTrace();
 		}
 	}
 	

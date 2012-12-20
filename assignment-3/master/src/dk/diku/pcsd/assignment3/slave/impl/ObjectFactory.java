@@ -50,171 +50,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link ServiceInitializingException }
-     * 
-     */
-    public ServiceInitializingException createServiceInitializingException() {
-        return new ServiceInitializingException();
-    }
-
-    /**
-     * Create an instance of {@link StringLengthPredicate }
-     * 
-     */
-    public StringLengthPredicate createStringLengthPredicate() {
-        return new StringLengthPredicate();
-    }
-
-    /**
-     * Create an instance of {@link KeyImpl }
-     * 
-     */
-    public KeyImpl createKeyImpl() {
-        return new KeyImpl();
-    }
-
-    /**
-     * Create an instance of {@link InitResponse }
-     * 
-     */
-    public InitResponse createInitResponse() {
-        return new InitResponse();
-    }
-
-    /**
-     * Create an instance of {@link TimestampPair }
-     * 
-     */
-    public TimestampPair createTimestampPair() {
-        return new TimestampPair();
-    }
-
-    /**
-     * Create an instance of {@link ValueListImpl }
-     * 
-     */
-    public ValueListImpl createValueListImpl() {
-        return new ValueListImpl();
-    }
-
-    /**
      * Create an instance of {@link BeginGreaterThanEndException }
      * 
      */
     public BeginGreaterThanEndException createBeginGreaterThanEndException() {
         return new BeginGreaterThanEndException();
-    }
-
-    /**
-     * Create an instance of {@link LogApply }
-     * 
-     */
-    public LogApply createLogApply() {
-        return new LogApply();
-    }
-
-    /**
-     * Create an instance of {@link TimestampListPair }
-     * 
-     */
-    public TimestampListPair createTimestampListPair() {
-        return new TimestampListPair();
-    }
-
-    /**
-     * Create an instance of {@link PairImpl }
-     * 
-     */
-    public PairImpl createPairImpl() {
-        return new PairImpl();
-    }
-
-    /**
-     * Create an instance of {@link Read }
-     * 
-     */
-    public Read createRead() {
-        return new Read();
-    }
-
-    /**
-     * Create an instance of {@link ServiceAlreadyInitializedException }
-     * 
-     */
-    public ServiceAlreadyInitializedException createServiceAlreadyInitializedException() {
-        return new ServiceAlreadyInitializedException();
-    }
-
-    /**
-     * Create an instance of {@link ListPredicate }
-     * 
-     */
-    public ListPredicate createListPredicate() {
-        return new ListPredicate();
-    }
-
-    /**
-     * Create an instance of {@link FileNotFoundException }
-     * 
-     */
-    public FileNotFoundException createFileNotFoundException() {
-        return new FileNotFoundException();
-    }
-
-    /**
-     * Create an instance of {@link ReadResponse }
-     * 
-     */
-    public ReadResponse createReadResponse() {
-        return new ReadResponse();
-    }
-
-    /**
-     * Create an instance of {@link AtomicScan }
-     * 
-     */
-    public AtomicScan createAtomicScan() {
-        return new AtomicScan();
-    }
-
-    /**
-     * Create an instance of {@link LogApplyResponse }
-     * 
-     */
-    public LogApplyResponse createLogApplyResponse() {
-        return new LogApplyResponse();
-    }
-
-    /**
-     * Create an instance of {@link AtomicScanResponse }
-     * 
-     */
-    public AtomicScanResponse createAtomicScanResponse() {
-        return new AtomicScanResponse();
-    }
-
-    /**
-     * Create an instance of {@link LogRecord }
-     * 
-     */
-    public LogRecord createLogRecord() {
-        return new LogRecord();
-    }
-
-    /**
-     * Create an instance of {@link Init }
-     * 
-     */
-    public Init createInit() {
-        return new Init();
-    }
-
-    /**
-     * Create an instance of {@link ScanResponse }
-     * 
-     */
-    public ScanResponse createScanResponse() {
-        return new ScanResponse();
     }
 
     /**
@@ -226,19 +66,67 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link ValueImpl }
+     * Create an instance of {@link AtomicScan }
      * 
      */
-    public ValueImpl createValueImpl() {
-        return new ValueImpl();
+    public AtomicScan createAtomicScan() {
+        return new AtomicScan();
     }
 
     /**
-     * Create an instance of {@link TimestampLog }
+     * Create an instance of {@link AtomicScanResponse }
      * 
      */
-    public TimestampLog createTimestampLog() {
-        return new TimestampLog();
+    public AtomicScanResponse createAtomicScanResponse() {
+        return new AtomicScanResponse();
+    }
+
+    /**
+     * Create an instance of {@link ServiceAlreadyInitializedException }
+     * 
+     */
+    public ServiceAlreadyInitializedException createServiceAlreadyInitializedException() {
+        return new ServiceAlreadyInitializedException();
+    }
+
+    /**
+     * Create an instance of {@link ScanResponse }
+     * 
+     */
+    public ScanResponse createScanResponse() {
+        return new ScanResponse();
+    }
+
+    /**
+     * Create an instance of {@link ServiceInitializingException }
+     * 
+     */
+    public ServiceInitializingException createServiceInitializingException() {
+        return new ServiceInitializingException();
+    }
+
+    /**
+     * Create an instance of {@link Init }
+     * 
+     */
+    public Init createInit() {
+        return new Init();
+    }
+
+    /**
+     * Create an instance of {@link InitResponse }
+     * 
+     */
+    public InitResponse createInitResponse() {
+        return new InitResponse();
+    }
+
+    /**
+     * Create an instance of {@link Read }
+     * 
+     */
+    public Read createRead() {
+        return new Read();
     }
 
     /**
@@ -263,6 +151,38 @@ public class ObjectFactory {
      */
     public IOException createIOException() {
         return new IOException();
+    }
+
+    /**
+     * Create an instance of {@link LogApplyResponse }
+     * 
+     */
+    public LogApplyResponse createLogApplyResponse() {
+        return new LogApplyResponse();
+    }
+
+    /**
+     * Create an instance of {@link FileNotFoundException }
+     * 
+     */
+    public FileNotFoundException createFileNotFoundException() {
+        return new FileNotFoundException();
+    }
+
+    /**
+     * Create an instance of {@link ReadResponse }
+     * 
+     */
+    public ReadResponse createReadResponse() {
+        return new ReadResponse();
+    }
+
+    /**
+     * Create an instance of {@link LogApply }
+     * 
+     */
+    public LogApply createLogApply() {
+        return new LogApply();
     }
 
     /**

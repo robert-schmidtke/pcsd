@@ -1,6 +1,10 @@
 package client;
 
-import dk.diku.pcsd.assignment1.impl.*;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplService;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplServiceService;
+import dk.diku.pcsd.assignment3.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 
 public class MyClient {
 

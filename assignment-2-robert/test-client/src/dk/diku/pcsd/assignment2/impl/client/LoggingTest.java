@@ -9,15 +9,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import dk.diku.pcsd.assignment2.impl.KeyImpl;
-import dk.diku.pcsd.assignment2.impl.KeyNotFoundException_Exception;
-import dk.diku.pcsd.assignment2.impl.KeyValueBaseImplService;
-import dk.diku.pcsd.assignment2.impl.KeyValueBaseImplServiceService;
-import dk.diku.pcsd.assignment2.impl.Pair;
-import dk.diku.pcsd.assignment2.impl.PairImpl;
-import dk.diku.pcsd.assignment2.impl.ServiceAlreadyInitializedException_Exception;
-import dk.diku.pcsd.assignment2.impl.ValueImpl;
-import dk.diku.pcsd.assignment2.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyNotFoundException_Exception;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplService;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplServiceService;
+import dk.diku.pcsd.assignment3.impl.Pair;
+import dk.diku.pcsd.assignment3.impl.PairImpl;
+import dk.diku.pcsd.assignment3.impl.ServiceAlreadyInitializedException_Exception;
+import dk.diku.pcsd.assignment3.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 
 public class LoggingTest {
 	
@@ -66,7 +66,7 @@ public class LoggingTest {
 			ValueImpl v = kvbis.read(key).getValueList().get(0);
 			Assert.assertEquals(84, v.getValue());
 		} catch (Exception e) {
-			throw new RuntimeException();
+			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 	

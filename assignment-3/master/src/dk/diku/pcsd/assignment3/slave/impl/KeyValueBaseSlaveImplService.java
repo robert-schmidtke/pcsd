@@ -8,6 +8,10 @@ import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
+import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
+import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
 
 /**
@@ -27,8 +31,8 @@ public interface KeyValueBaseSlaveImplService {
      * 
      * @param arg0
      * @throws ServiceInitializingException_Exception
-     * @throws FileNotFoundException_Exception
      * @throws ServiceAlreadyInitializedException_Exception
+     * @throws FileNotFoundException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "init", targetNamespace = "http://impl.slave.assignment3.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment3.slave.impl.Init")
@@ -43,7 +47,7 @@ public interface KeyValueBaseSlaveImplService {
      * 
      * @param arg0
      * @return
-     *     returns dk.diku.pcsd.assignment3.slave.impl.Pair
+     *     returns dk.diku.pcsd.keyvaluebase.interfaces.Pair
      * @throws IOException_Exception
      * @throws ServiceNotInitializedException_Exception
      * @throws KeyNotFoundException_Exception
@@ -64,10 +68,10 @@ public interface KeyValueBaseSlaveImplService {
      * @param arg1
      * @param arg0
      * @return
-     *     returns dk.diku.pcsd.assignment3.slave.impl.Pair
-     * @throws IOException_Exception
+     *     returns dk.diku.pcsd.keyvaluebase.interfaces.Pair
      * @throws BeginGreaterThanEndException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -89,10 +93,10 @@ public interface KeyValueBaseSlaveImplService {
      * @param arg1
      * @param arg0
      * @return
-     *     returns dk.diku.pcsd.assignment3.slave.impl.Pair
-     * @throws IOException_Exception
+     *     returns dk.diku.pcsd.keyvaluebase.interfaces.Pair
      * @throws BeginGreaterThanEndException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")

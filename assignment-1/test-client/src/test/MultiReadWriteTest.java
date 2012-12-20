@@ -11,18 +11,18 @@ import java.util.concurrent.Executors;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import dk.diku.pcsd.assignment1.impl.FileNotFoundException_Exception;
-import dk.diku.pcsd.assignment1.impl.IOException_Exception;
-import dk.diku.pcsd.assignment1.impl.KeyAlreadyPresentException_Exception;
-import dk.diku.pcsd.assignment1.impl.KeyImpl;
-import dk.diku.pcsd.assignment1.impl.KeyNotFoundException_Exception;
-import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplService;
-import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplServiceService;
-import dk.diku.pcsd.assignment1.impl.ServiceAlreadyInitializedException_Exception;
-import dk.diku.pcsd.assignment1.impl.ServiceInitializingException_Exception;
-import dk.diku.pcsd.assignment1.impl.ServiceNotInitializedException_Exception;
-import dk.diku.pcsd.assignment1.impl.ValueImpl;
-import dk.diku.pcsd.assignment1.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.impl.FileNotFoundException_Exception;
+import dk.diku.pcsd.assignment3.impl.IOException_Exception;
+import dk.diku.pcsd.assignment3.impl.KeyAlreadyPresentException_Exception;
+import dk.diku.pcsd.assignment3.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.impl.KeyNotFoundException_Exception;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplService;
+import dk.diku.pcsd.assignment3.impl.KeyValueBaseImplServiceService;
+import dk.diku.pcsd.assignment3.impl.ServiceAlreadyInitializedException_Exception;
+import dk.diku.pcsd.assignment3.impl.ServiceInitializingException_Exception;
+import dk.diku.pcsd.assignment3.impl.ServiceNotInitializedException_Exception;
+import dk.diku.pcsd.assignment3.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.impl.ValueListImpl;
 
 public class MultiReadWriteTest {
 	static KeyValueBaseImplServiceService kvbiss;
@@ -39,7 +39,7 @@ public class MultiReadWriteTest {
 		kvbiss = new KeyValueBaseImplServiceService();
 		kvbis = kvbiss.getKeyValueBaseImplServicePort();
 		try {
-			kvbis.init(null);
+			kvbis.init("");
 		} catch (FileNotFoundException_Exception e) {
 			e.printStackTrace();
 		} catch (ServiceAlreadyInitializedException_Exception e) {
