@@ -2,3 +2,7 @@
 - test proxy
 - test replicator
 - (all previous tests?)
+
+
+howto: generate clients in proxy and master
+wsimport -b slave.episode -s . http://localhost:8080/slave/keyvaluebaseslave?wsdl
