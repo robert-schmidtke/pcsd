@@ -1,0 +1,4 @@
+- write to master, read from slave
+- test proxy
+- test replicator
+- (all previous tests?)
