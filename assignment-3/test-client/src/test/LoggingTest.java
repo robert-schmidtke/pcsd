@@ -1,5 +1,9 @@
 package test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,6 +14,8 @@ import dk.diku.pcsd.assignment3.master.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception;
 import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplService;
 import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplServiceService;
+import dk.diku.pcsd.assignment3.master.impl.Pair;
+import dk.diku.pcsd.assignment3.master.impl.PairImpl;
 import dk.diku.pcsd.assignment3.master.impl.ServiceAlreadyInitializedException_Exception;
 import dk.diku.pcsd.assignment3.master.impl.TimestampPair;
 import dk.diku.pcsd.assignment3.master.impl.ValueImpl;
@@ -34,7 +40,7 @@ public class LoggingTest {
 		// initialize server the first time
 		try {
 			Configuration cfg = new Configuration();
-			cfg.getSlaves().add("http://localhost:8080/pcsd-assignment3-slave/keyvaluebaseslave?wsdl");
+			cfg.getSlaves().add("http://localhost:8081/pcsd-assignment3-slave/keyvaluebaseslave?wsdl");
 			kvbis.config(cfg);
 			kvbis.init("dk/init.list");
 		} catch (Exception e) {
@@ -141,7 +147,7 @@ public class LoggingTest {
 		}
 	}
 
-	@Test
+	// @Test
 	public void testBulkPut() {
 		System.out.println("testBulkPut");
 		
@@ -157,8 +163,8 @@ public class LoggingTest {
 			valueList.getValueList().add(value);
 			
 			PairImpl pair = new PairImpl();
-			pair.setKey(key);
-			pair.setValue(valueList);
+			pair.setK(key);
+			pair.setV(valueList);
 			pairs.add(pair);
 		}
 		
@@ -215,7 +221,7 @@ public class LoggingTest {
 		System.out.print("Starting Tomcat... ");
 		try {
 			new ProcessBuilder("/home/robert/apache-tomcat-7.0.33/bin/startup.sh").start().waitFor();
-			Thread.sleep(6000);
+			Thread.sleep(12000);
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -226,7 +232,7 @@ public class LoggingTest {
 		System.out.print("Stopping Tomcat... ");
 		try {
 			new ProcessBuilder("/home/robert/apache-tomcat-7.0.33/bin/shutdown.sh").start().waitFor();
-			Thread.sleep(3000);
+			Thread.sleep(12000);
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
