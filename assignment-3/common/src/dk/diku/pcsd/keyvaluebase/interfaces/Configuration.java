@@ -1,5 +1,6 @@
 package dk.diku.pcsd.keyvaluebase.interfaces;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,8 +11,13 @@ import java.util.List;
  * proxies and the master to find all the
  * replicas.
  */
-public class Configuration {
-	private String master = "http://localhost:12345/keyValueBase/master?wsdl";
+public class Configuration implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8025195159733077837L;
+	
+	private String master = "";
 	private List<String> slaves = new ArrayList<String>();
 	public String getMaster() {
 		return master;
