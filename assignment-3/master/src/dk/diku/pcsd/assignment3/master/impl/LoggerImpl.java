@@ -69,62 +69,6 @@ public abstract class LoggerImpl implements Logger {
 		out.close();
 		super.finalize();
 	}
-/*
-	@Override
-	public void run() {
-		execute = true;
-		initOutputStream();
-		long lastRun = System.currentTimeMillis();
-		while(execute) {
-			if(logQueue.size() >= K || (logQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
-				Iterator<LogQueueEntry<Date>> it = logQueue.iterator();
-				while(it.hasNext()) {
-					LogQueueEntry<Date> entry = it.next();
-					try {
-						out.writeObject(entry.record);
-					} catch (IOException e) {
-						throw new RuntimeException(e.getMessage(), e);
-					}
-				}
-				
-				try {
-					out.flush();
-				} catch (IOException e) {
-					throw new RuntimeException(e.getMessage(), e);
-				}
-				
-				while(logQueue.size() > 0) {
-					logQueue.poll().future.signalAll(new Date());
-				}
-				
-				lastRun = System.currentTimeMillis();
-			}
-			
-			if(truncate) {
-				try {
-					out.flush();
-					out.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e.getMessage(), e);
-				}
-				
-				logFile.delete();
-				initOutputStream();
-				truncate = false;
-			}
-		}
-		
-		try {
-			out.flush();
-			out.close();
-		} catch(Exception e) {
-			// maybe it was flushed and closed before
-		}
-	}
-*/	
-	public void stop() {
-		execute = false;
-	}
 	
 	public void truncate() {
 		truncate = true;
