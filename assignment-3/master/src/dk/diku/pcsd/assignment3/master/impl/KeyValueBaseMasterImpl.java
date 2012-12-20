@@ -38,14 +38,18 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 		KeyValueBaseLog<KeyImpl, ValueListImpl> {
 
 	private ReadWriteLock quiesceLock;
+	
+	// FIXME stop those threads!
 
 	private CheckpointerImpl checkpointer;
+	private Thread checkpointerThread;
 
 	private ReplicatorImpl replicator;
+	private Thread replicatorThread;
 
 	private boolean logging = true, recovering = false;
 
-	List<KeyValueBaseSlaveImplService> slaves;
+	private List<KeyValueBaseSlaveImplService> slaves;
 
 	public KeyValueBaseMasterImpl() {
 		this(IndexImpl.getInstance(), ReplicatorImpl.getInstance(),
@@ -53,7 +57,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	}
 
 	private KeyValueBaseMasterImpl(IndexImpl index, ReplicatorImpl replicator,
-			CheckpointerImpl checkpointer) {
+			CheckpointerImpl checkpointer) {		
 		quiesceLock = new ReentrantReadWriteLock(true);
 		this.replicator = replicator;
 		this.checkpointer = checkpointer;
@@ -63,39 +67,40 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			this.index = this.replicator.recoverIndex();
 			List<LogRecord> records = this.replicator.recoverLogRecords();
 
-			// if we have not the situation that the first log entry is init
-			// then we must declare the service as initialized and start the
+			// if we have not the situation that the first log entry is config
+			// then we must declare the service as configured and start the
 			// logger and checkpointer
-			// because the log is only created after init
-			initialized = !(records.size() > 0 && records.get(0)
+			// because the log is only created after config
+			boolean wasConfigured = !(records.size() > 0 && records.get(0)
+					.getMethodName().equals("config"));
+			
+			// same for initialized
+			initialized = !(records.size() > 1 && records.get(1)
 					.getMethodName().equals("init"));
-			boolean wasInitialized = initialized;
 
 			logging = false;
 			recovering = true;
 			for (LogRecord record : records) {
 				try {
-					record.invoke(this);
+					if(record.getMethodName().equals("init") || record.getMethodName().equals("config"))
+						record.invoke(this);
+					else
+						record.invoke(IndexImpl.getInstance());
 				} catch (Exception e) {
-					// throw new RuntimeException(e.getMessage(), e);
+					e.printStackTrace();
 				}
 			}
 			logging = true;
 			recovering = false;
 
-			if (wasInitialized) {
-				new Thread(this.replicator).start();
-				new Thread(this.checkpointer).start();
+			if (wasConfigured) {
+				replicatorThread = new Thread(this.replicator);
+				replicatorThread.start();
+				checkpointerThread = new Thread(this.checkpointer);
+				checkpointerThread.start();
 			}
 		} else
 			this.index = index;
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		replicator.stop();
-		checkpointer.stop();
-		super.finalize();
 	}
 
 	@Override
@@ -110,10 +115,6 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			if (initializing) {
 				throw new ServiceInitializingException();
 			}
-
-			if (logging || recovering)
-				new Thread(replicator).start();
-			new Thread(checkpointer).start();
 
 			if (logging)
 				log("init", serverFilename);
@@ -183,7 +184,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				throw new ServiceNotInitializedException();
 			}
 			if (logging)
-				log("delete", k);
+				log("remove", k);
 			index.remove(k);
 		} finally {
 			quiesceLock.readLock().unlock();
@@ -250,6 +251,10 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				replicator.logRequest(
 						new LogRecord(KeyValueBaseReplica.class,
 								methodName, params)).get();
+			} else if(methodName.equals("config")) {
+				replicator.logRequest(
+						new LogRecord(KeyValueBaseMaster.class,
+								methodName, params)).get();
 			} else {
 				replicator.logRequest(
 						new LogRecord(IndexImpl.class, methodName, params))
@@ -263,9 +268,21 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	@Override
 	public void config(Configuration conf)
 			throws ServiceAlreadyConfiguredException {
+		quiesceLock.readLock().lock();
 		if (slaves != null) {
+			quiesceLock.readLock().unlock();
 			throw new ServiceAlreadyConfiguredException();
 		}
+		
+		if (logging || recovering) {
+			replicatorThread = new Thread(replicator);
+			replicatorThread.start();
+		}
+		checkpointerThread = new Thread(checkpointer);
+		checkpointerThread.start();
+		
+		if(logging)
+			log("config", conf);
 
 		slaves = new ArrayList<KeyValueBaseSlaveImplService>();
 
@@ -287,7 +304,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 		}
 
 		replicator.setSlaves(slaves);
-
+		quiesceLock.readLock().unlock();
 	}
 
 }
