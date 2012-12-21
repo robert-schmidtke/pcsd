@@ -3,6 +3,7 @@ package dk.diku.pcsd.assignment3.master.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -82,9 +83,14 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 						LogRecord r = signalQueue.peek().record;
 						// do not replicate configure log requests
 						if(!r.getMethodName().equals("config")) {
-							for (KeyValueBaseSlaveImplService s : slaves) {
+							
+							for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+								KeyValueBaseSlaveImplService s = it.next();
 								try {
 									s.logApply(r);
+								} catch(javax.xml.ws.WebServiceException e){
+									System.out.println("Master: Webservice exception, removing slave");
+									it.remove();
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

@@ -1,6 +1,7 @@
 package dk.diku.pcsd.assignment3.proxy.impl;
 
 import javax.jws.WebParam;
+import javax.xml.ws.WebServiceException;
 
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplService;
@@ -29,7 +30,7 @@ public class Replica {
 
 	public Pair read(KeyImpl key) throws IOException_Exception,
 			KeyNotFoundException_Exception,
-			ServiceNotInitializedException_Exception {
+			ServiceNotInitializedException_Exception, WebServiceException {
 		if (hasMaster) {
 			try {
 				return master.read(key);
@@ -48,36 +49,49 @@ public class Replica {
 
 	public Pair scan(KeyImpl from, KeyImpl to, Predicate pred)
 			throws BeginGreaterThanEndException_Exception,
-			IOException_Exception, ServiceNotInitializedException_Exception {
-		if (hasMaster){
+			IOException_Exception, ServiceNotInitializedException_Exception,
+			WebServiceException {
+		if (hasMaster) {
 			try {
 				return master.scan(from, to, pred);
 			} catch (dk.diku.pcsd.assignment3.master.impl.BeginGreaterThanEndException_Exception e) {
-				throw new BeginGreaterThanEndException_Exception(e.getMessage(), null);
+				throw new BeginGreaterThanEndException_Exception(
+						e.getMessage(), null);
 			} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
 				throw new IOException_Exception(e.getMessage(), null);
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-				throw new ServiceNotInitializedException_Exception(e.getMessage(), null);
+				throw new ServiceNotInitializedException_Exception(
+						e.getMessage(), null);
 			}
-		}else{
+		} else {
 			return slave.scan(from, to, pred);
 		}
 	}
 	
+	public Object getReplica(){
+		if (hasMaster)
+			return master;
+		else 
+			return slave;
+	}
+
 	public Pair atomicScan(KeyImpl from, KeyImpl to, Predicate pred)
 			throws BeginGreaterThanEndException_Exception,
-			IOException_Exception, ServiceNotInitializedException_Exception {
-		if (hasMaster){
+			IOException_Exception, ServiceNotInitializedException_Exception,
+			WebServiceException {
+		if (hasMaster) {
 			try {
 				return master.atomicScan(from, to, pred);
 			} catch (dk.diku.pcsd.assignment3.master.impl.BeginGreaterThanEndException_Exception e) {
-				throw new BeginGreaterThanEndException_Exception(e.getMessage(), null);
+				throw new BeginGreaterThanEndException_Exception(
+						e.getMessage(), null);
 			} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
 				throw new IOException_Exception(e.getMessage(), null);
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-				throw new ServiceNotInitializedException_Exception(e.getMessage(), null);
+				throw new ServiceNotInitializedException_Exception(
+						e.getMessage(), null);
 			}
-		}else{
+		} else {
 			return slave.atomicScan(from, to, pred);
 		}
 	}

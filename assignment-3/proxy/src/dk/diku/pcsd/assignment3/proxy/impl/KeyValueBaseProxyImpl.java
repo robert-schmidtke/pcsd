@@ -6,8 +6,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
+import javax.xml.ws.WebServiceException;
 
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
 import dk.diku.pcsd.assignment3.impl.TimestampListPair;
@@ -40,100 +43,121 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
-public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueListImpl> {
+public class KeyValueBaseProxyImpl implements
+		KeyValueBaseProxy<KeyImpl, ValueListImpl> {
 	private KeyValueBaseMasterImplService master;
 	private List<KeyValueBaseSlaveImplService> slaves;
-	
+
 	private int currentReplica = 0;
+	private int replicas;
 	private TimestampLog lastLSN;
-	
-	public KeyValueBaseProxyImpl(){
+
+	public KeyValueBaseProxyImpl() {
 		lastLSN = new TimestampLog(0L);
 	}
-	
-	
+
 	@Override
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
 			ServiceInitializingException, FileNotFoundException {
-		try {
-			master.init(serverFilename);
-		} catch (FileNotFoundException_Exception e) {
-			throw new FileNotFoundException(e.getMessage());
-		} catch (ServiceAlreadyInitializedException_Exception e) {
-			throw new ServiceAlreadyInitializedException(e.getMessage());
-		} catch (ServiceInitializingException_Exception e) {
-			throw new ServiceInitializingException(e.getMessage());
+		if (master != null) {
+			try {
+				master.init(serverFilename);
+			} catch (WebServiceException e) {
+				removeMaster();
+			} catch (FileNotFoundException_Exception e) {
+				throw new FileNotFoundException(e.getMessage());
+			} catch (ServiceAlreadyInitializedException_Exception e) {
+				throw new ServiceAlreadyInitializedException(e.getMessage());
+			} catch (ServiceInitializingException_Exception e) {
+				throw new ServiceInitializingException(e.getMessage());
+			}
 		}
-		
 	}
 
 	@Override
 	public ValueListImpl read(KeyImpl k) throws KeyNotFoundException,
 			IOException, ServiceNotInitializedException {
-		ValueListImpl result=null;
-		try {
-			Pair p= getReplica().read(k);
-			if (p instanceof TimestampPair){
-				TimestampPair tsp = (TimestampPair) p;
-				if (tsp.getKey().before(lastLSN)){
-					return read(k);
-				}else{
-					lastLSN = tsp.getKey();
-					result = tsp.getValue();
+		if (replicas > 0) {
+			ValueListImpl result = null;
+			Replica r = getReplica();
+			try {
+				Pair p = r.read(k);
+				if (p instanceof TimestampPair) {
+					TimestampPair tsp = (TimestampPair) p;
+					if (tsp.getKey().before(lastLSN)) {
+						return read(k);
+					} else {
+						lastLSN = tsp.getKey();
+						result = tsp.getValue();
+					}
 				}
+			} catch (WebServiceException e) {
+				remove(r.getReplica());
+				return read(k);
+			} catch (IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (KeyNotFoundException_Exception e) {
+				throw new KeyNotFoundException(e.getMessage(), null);
+			} catch (ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
 			}
-		} catch (IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (KeyNotFoundException_Exception e) {
-			throw new KeyNotFoundException(e.getMessage(), null);
-		} catch (ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	@Override
 	public void insert(KeyImpl k, ValueListImpl v)
 			throws KeyAlreadyPresentException, IOException,
 			ServiceNotInitializedException {
-		try {
-			master.insert(k, v);
-		} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (KeyAlreadyPresentException_Exception e) {
-			throw new KeyAlreadyPresentException(e.getMessage(), null);
-		} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
+		if (master != null) {
+			try {
+				master.insert(k, v);
+			} catch (WebServiceException e) {
+				removeMaster();
+			} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (KeyAlreadyPresentException_Exception e) {
+				throw new KeyAlreadyPresentException(e.getMessage(), null);
+			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			}
 		}
-		
 	}
 
 	@Override
 	public void update(KeyImpl k, ValueListImpl newV)
 			throws KeyNotFoundException, IOException,
 			ServiceNotInitializedException {
-		try {
-			master.update(k, newV);
-		} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception e) {
-			throw new KeyNotFoundException(e.getMessage(), null);
-		} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
+		if (master != null) {
+			try {
+				master.update(k, newV);
+			} catch (WebServiceException e) {
+				removeMaster();
+			} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception e) {
+				throw new KeyNotFoundException(e.getMessage(), null);
+			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			}
 		}
-		
 	}
 
 	@Override
 	public void delete(KeyImpl k) throws KeyNotFoundException,
 			ServiceNotInitializedException {
-		try {
-			master.delete(k);
-		} catch (dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception e) {
-			throw new KeyNotFoundException(e.getMessage(), null);
-		} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
+		if (master != null) {
+			try {
+				master.delete(k);
+			} catch (WebServiceException e) {
+				removeMaster();
+			} catch (dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception e) {
+				throw new KeyNotFoundException(e.getMessage(), null);
+			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			}
 		}
 	}
 
@@ -141,64 +165,84 @@ public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueLis
 	public List<ValueListImpl> scan(KeyImpl begin, KeyImpl end,
 			Predicate<ValueListImpl> pred) throws IOException,
 			BeginGreaterThanEndException, ServiceNotInitializedException {
-		List<ValueListImpl> result=null;
-		try {
-			Pair p= getReplica().scan(begin, end, pred);
-			if (p instanceof TimestampListPair){
-				TimestampListPair tsp = (TimestampListPair) p;
-				if (tsp.getKey().before(lastLSN)){
-					return scan(begin, end, pred);
-				}else{
-					lastLSN = tsp.getKey();
-					result = tsp.getValue();
+		if (replicas > 0) {
+			List<ValueListImpl> result = null;
+			Replica r = getReplica();
+			try {
+				Pair p = r.scan(begin, end, pred);
+				if (p instanceof TimestampListPair) {
+					TimestampListPair tsp = (TimestampListPair) p;
+					if (tsp.getKey().before(lastLSN)) {
+						return scan(begin, end, pred);
+					} else {
+						lastLSN = tsp.getKey();
+						result = tsp.getValue();
+					}
 				}
+			} catch (WebServiceException e) {
+				remove(r.getReplica());
+				return atomicScan(begin, end, pred);
+			} catch (IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			} catch (BeginGreaterThanEndException_Exception e) {
+				throw new BeginGreaterThanEndException(e.getMessage(), null,
+						null);
 			}
-		} catch (IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
-		} catch (BeginGreaterThanEndException_Exception e) {
-			throw new BeginGreaterThanEndException(e.getMessage(), null, null);
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	@Override
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end,
 			Predicate<ValueListImpl> pred) throws IOException,
 			BeginGreaterThanEndException, ServiceNotInitializedException {
-		List<ValueListImpl> result=null;
-		try {
-			Pair p= getReplica().atomicScan(begin, end, pred);
-			if (p instanceof TimestampListPair){
-				TimestampListPair tsp = (TimestampListPair) p;
-				if (tsp.getKey().before(lastLSN)){
-					return atomicScan(begin, end, pred);
-				}else{
-					lastLSN = tsp.getKey();
-					result = tsp.getValue();
+		if (replicas > 0) {
+			List<ValueListImpl> result = null;
+			Replica r = getReplica();
+			try {
+				Pair p = r.atomicScan(begin, end, pred);
+				if (p instanceof TimestampListPair) {
+					TimestampListPair tsp = (TimestampListPair) p;
+					if (tsp.getKey().before(lastLSN)) {
+						return atomicScan(begin, end, pred);
+					} else {
+						lastLSN = tsp.getKey();
+						result = tsp.getValue();
+					}
 				}
+			} catch (WebServiceException e) {
+				remove(r.getReplica());
+				return atomicScan(begin, end, pred);
+			} catch (IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			} catch (BeginGreaterThanEndException_Exception e) {
+				throw new BeginGreaterThanEndException(e.getMessage(), null,
+						null);
 			}
-		} catch (IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
-		} catch (BeginGreaterThanEndException_Exception e) {
-			throw new BeginGreaterThanEndException(e.getMessage(), null, null);
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	@Override
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> mappings)
 			throws IOException, ServiceNotInitializedException {
-		List list = mappings;
-		try {
-			master.bulkPut(list);
-		} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
-			throw new IOException(e.getMessage());
-		} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
-			throw new ServiceNotInitializedException(e.getMessage());
+		if (master != null) {
+			List list = mappings;
+			try {
+				master.bulkPut(list);
+			} catch (WebServiceException e) {
+				removeMaster();
+			} catch (dk.diku.pcsd.assignment3.master.impl.IOException_Exception e) {
+				throw new IOException(e.getMessage());
+			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
+				throw new ServiceNotInitializedException(e.getMessage());
+			}
 		}
 	}
 
@@ -208,8 +252,8 @@ public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueLis
 		if (slaves != null) {
 			throw new ServiceAlreadyConfiguredException();
 		}
-		
-		try{
+
+		try {
 			URL baseUrl;
 			baseUrl = dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplServiceService.class
 					.getResource(".");
@@ -219,8 +263,13 @@ public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueLis
 					"KeyValueBaseMasterImplServiceService");
 			KeyValueBaseMasterImplServiceService mservice = new KeyValueBaseMasterImplServiceService(
 					url, qn);
-			
+
 			master = mservice.getKeyValueBaseMasterImplServicePort();
+
+			Map<String, Object> requestContext = ((BindingProvider) master)
+					.getRequestContext();
+			requestContext.put("com.sun.xml.ws.connect.timeout", 15000);
+			requestContext.put("com.sun.xml.ws.request.timeout", 15000);
 
 			slaves = new ArrayList<KeyValueBaseSlaveImplService>();
 
@@ -234,32 +283,69 @@ public class KeyValueBaseProxyImpl implements KeyValueBaseProxy<KeyImpl,ValueLis
 							"KeyValueBaseSlaveImplServiceService");
 					KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(
 							url, qn);
-					slaves.add(service.getKeyValueBaseSlaveImplServicePort());
+
+					KeyValueBaseSlaveImplService newSlave = service
+							.getKeyValueBaseSlaveImplServicePort();
+
+					requestContext = ((BindingProvider) newSlave)
+							.getRequestContext();
+					requestContext.put("com.sun.xml.ws.connect.timeout", 15000);
+					requestContext.put("com.sun.xml.ws.request.timeout", 15000);
+
+					slaves.add(newSlave);
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				}
 			}
-			
+
+			replicas = slaves.size() + 1;
+
 			try {
 				master.config(conf);
 			} catch (ServiceAlreadyConfiguredException_Exception e) {
 				// Fuck it, bin ich wohl nicht der erste.
 			}
-		}catch (MalformedURLException e) {
+		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	private Replica getReplica(){
-		if (currentReplica >= slaves.size()){
-			currentReplica = (currentReplica + 1) % (slaves.size()+1);
+
+	private Replica getReplica() {
+		if (currentReplica >= slaves.size()) {
+			currentReplica = (currentReplica + 1) % replicas;
 			return new Replica(master);
-		}else{
+		} else {
 			int index = currentReplica;
-			currentReplica = (currentReplica + 1) % (slaves.size()+1);
+			currentReplica = (currentReplica + 1) % replicas;
 			return new Replica(slaves.get(index));
 		}
+	}
+
+	private void remove(Object o) {
+		if (o instanceof KeyValueBaseSlaveImplService)
+			removeSlave((KeyValueBaseSlaveImplService) o);
+		else
+			removeMaster();
+	}
+
+	private void removeSlave(KeyValueBaseSlaveImplService slave) {
+		int toDelete = -1;
+		for (int i = 0; i<slaves.size(); i++){
+			if (slaves.get(i)==slave){
+				toDelete = i;
+				break;
+			}			
+		}
+		if (toDelete != -1)
+			slaves.remove(toDelete);
+		replicas = slaves.size() + (master != null ? 1 : 0);
+	}
+
+	private void removeMaster() {
+		System.out.println("Proxy: removed master");
+		master = null;
+		replicas = slaves.size();
 	}
 
 }

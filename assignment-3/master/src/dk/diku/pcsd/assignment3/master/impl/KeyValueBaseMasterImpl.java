@@ -6,10 +6,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
 
 import dk.diku.pcsd.assignment3.impl.IndexImpl;
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
@@ -297,7 +299,13 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 						"KeyValueBaseSlaveImplServiceService");
 				KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(
 						url, qn);
-				slaves.add(service.getKeyValueBaseSlaveImplServicePort());
+				KeyValueBaseSlaveImplService newSlave = service.getKeyValueBaseSlaveImplServicePort();
+				
+				Map<String, Object> requestContext = ((BindingProvider)newSlave).getRequestContext();
+				requestContext.put("com.sun.xml.ws.connect.timeout", 15000); 
+				requestContext.put("com.sun.xml.ws.request.timeout", 15000); 
+				
+				slaves.add(newSlave);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
