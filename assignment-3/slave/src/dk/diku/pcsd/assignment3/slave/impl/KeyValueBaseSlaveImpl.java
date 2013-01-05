@@ -37,7 +37,7 @@ public class KeyValueBaseSlaveImpl extends KeyValueBaseReplicaImpl implements Ke
 				indexFile.getParentFile().mkdirs();
 				
 				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(indexFile));
-				oos.writeObject(IndexImpl.getInstance().getFileLength());
+				oos.writeLong(IndexImpl.getInstance().getFileLength());
 				oos.writeObject(IndexImpl.getInstance().getEmptyList());
 				oos.writeObject(IndexImpl.getInstance().getMappings());
 				oos.close();
