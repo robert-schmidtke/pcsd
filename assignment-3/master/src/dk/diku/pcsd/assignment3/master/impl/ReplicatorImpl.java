@@ -101,6 +101,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					lastRun = System.currentTimeMillis();
 				}
 	
+				// done by the checkpointer
 				if (truncate) {
 					try {
 						out.flush();
@@ -112,6 +113,19 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					logFile.delete();
 					initOutputStream();
 					truncate = false;
+					
+					// signal the slaves
+					LogRecord checkpointRecord = new LogRecord("", "checkpoint", null);
+					for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+						KeyValueBaseSlaveImplService s = it.next();
+						try {
+							s.logApply(checkpointRecord);
+						} catch(javax.xml.ws.WebServiceException e){
+							it.remove();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			} catch (InterruptedException e1) {
 				// replicator got interrupted
