@@ -16,7 +16,9 @@ public class KeyValueBaseSlaveImpl extends KeyValueBaseReplicaImpl implements Ke
 		try{
 			if (record.getMethodName().equals("init")){
 				record.invoke(this);
-			}else{
+			} else if(record.getMethodName().equals("checkpoint")) {
+				// TODO flush index and store
+			} else {
 				record.invoke(IndexImpl.getInstance());
 			}
 			
