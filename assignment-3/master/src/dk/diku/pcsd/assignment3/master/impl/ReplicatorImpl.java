@@ -38,8 +38,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 
 	@Override
 	public Future<?> makeStable(LogRecord record) {
-		// TODO Auto-generated method stub
-		return null;
+		return logRequest(record);
 	}
 
 	@Override

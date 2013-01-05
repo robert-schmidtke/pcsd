@@ -250,15 +250,15 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	private void log(String methodName, Object... params) {
 		try {
 			if (methodName.equals("init")) {
-				replicator.logRequest(
+				replicator.makeStable(
 						new LogRecord(KeyValueBaseReplica.class,
 								methodName, params)).get();
 			} else if(methodName.equals("config")) {
-				replicator.logRequest(
+				replicator.makeStable(
 						new LogRecord(KeyValueBaseMaster.class,
 								methodName, params)).get();
 			} else {
-				replicator.logRequest(
+				replicator.makeStable(
 						new LogRecord(IndexImpl.class, methodName, params))
 						.get();
 			}
