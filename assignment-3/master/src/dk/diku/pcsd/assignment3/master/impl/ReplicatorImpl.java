@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import dk.diku.pcsd.assignment3.slave.impl.KeyValueBaseSlaveImplService;
+import dk.diku.pcsd.keyvaluebase.interfaces.Configuration;
+import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseMaster;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 
@@ -22,6 +24,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 public class ReplicatorImpl extends LoggerImpl implements Replicator {
 
 	private List<KeyValueBaseSlaveImplService> slaves = new ArrayList<KeyValueBaseSlaveImplService>();
+	private Configuration conf;
 
 	private static ReplicatorImpl instance;
 
@@ -112,6 +115,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 	
 					logFile.delete();
 					initOutputStream();
+					logSlaves();
 					truncate = false;
 					
 					// signal the slaves
@@ -141,8 +145,14 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 		}
 	}
 
-	public void setSlaves(List<KeyValueBaseSlaveImplService> s) {
+	public void setSlaves(List<KeyValueBaseSlaveImplService> s, Configuration conf) {
 		this.slaves = s;
+		this.conf = conf;
+	}
+	
+	private void logSlaves() {
+		LogRecord slavesRecord = new LogRecord(KeyValueBaseMaster.class, "config", new Object[] { conf });
+		makeStable(slavesRecord);
 	}
 	
 }
