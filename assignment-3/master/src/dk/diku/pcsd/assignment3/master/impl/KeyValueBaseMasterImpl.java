@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -100,6 +101,19 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				replicatorThread.start();
 				checkpointerThread = new Thread(this.checkpointer);
 				checkpointerThread.start();
+			}
+			
+			// make all slaves recover
+			LogRecord recoverRecord = new LogRecord("", "recover", null);
+			for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+				KeyValueBaseSlaveImplService s = it.next();
+				try {
+					s.logApply(recoverRecord);
+				} catch(javax.xml.ws.WebServiceException e){
+					it.remove();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		} else
 			this.index = index;
@@ -311,7 +325,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			}
 		}
 
-		replicator.setSlaves(slaves);
+		replicator.setSlaves(slaves, conf);
 		quiesceLock.readLock().unlock();
 	}
 
