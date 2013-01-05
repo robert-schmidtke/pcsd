@@ -6,6 +6,8 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.regex.Matcher;
 
+import org.apache.catalina.loader.WebappClassLoader;
+
 import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedPinnable;
 import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 
@@ -34,8 +36,11 @@ public class StoreImpl implements Store {
 		if(!tmpDir.endsWith(File.separator))
 			tmpDir += File.separator;
 		
+		// most bestest way to create a unique ID from the web app path to mark the store file
+		int uid = (System.getProperty("catalina.home") + ((WebappClassLoader) getClass().getClassLoader()).getContextName()).hashCode();
+		
 		// versioning of the store
-		String mmpPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + File.separator + "store.mmp";
+		String mmpPath = tmpDir + getClass().getPackage().getName().replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + File.separator + "store-" + uid + ".mmp";
 		File mmpFile = new File(mmpPath);
 
 		try {
