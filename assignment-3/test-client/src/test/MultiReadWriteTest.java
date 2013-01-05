@@ -38,7 +38,8 @@ public class MultiReadWriteTest {
 		kvbis = kvbiss.getKeyValueBaseProxyImplServicePort();
 		Configuration conf = new Configuration();
 		conf.setMaster("http://localhost:8080/master/keyvaluebasemaster?wsdl");
-		conf.getSlaves().add("http://localhost:8080/slave/keyvaluebaseslave?wsdl");
+		conf.getSlaves().add(
+				"http://localhost:8080/slave/keyvaluebaseslave?wsdl");
 
 		try {
 			kvbis.config(conf);
@@ -85,12 +86,13 @@ public class MultiReadWriteTest {
 			ValueListImpl valueList = new ValueListImpl();
 			valueList.getValueList().add(value);
 			try {
-
-				kvbis.insert(key, valueList);
-				testMap.put(keyValue, resultValue);
+				if (!testMap.containsKey(keyValue)) {
+					kvbis.insert(key, valueList);
+					testMap.put(keyValue, resultValue);
+				}
 
 			} catch (KeyAlreadyPresentException_Exception e) {
-				// do nothing
+				e.printStackTrace();
 			} catch (IOException_Exception e) {
 				e.printStackTrace();
 			} catch (ServiceNotInitializedException_Exception e) {
@@ -168,8 +170,9 @@ public class MultiReadWriteTest {
 						keyRead.setKey(randomReadKey);
 
 						expectedValue = testMap.get(randomReadKey);
-						actualValue = kvbis.read(keyRead).getValueList().get(0).getValue().toString();
-								
+						actualValue = kvbis.read(keyRead).getValueList().get(0)
+								.getValue().toString();
+
 					} catch (IOException_Exception e) {
 						e.printStackTrace();
 					} catch (KeyNotFoundException_Exception e) {

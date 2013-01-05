@@ -47,31 +47,10 @@ public class TestProxy {
 			
 
 			
-		} catch (ServiceAlreadyConfiguredException_Exception e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (FileNotFoundException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ServiceAlreadyInitializedException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ServiceInitializingException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyAlreadyPresentException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ServiceNotInitializedException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyNotFoundException_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
 		
 		
 	}

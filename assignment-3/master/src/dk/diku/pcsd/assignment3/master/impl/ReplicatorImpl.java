@@ -91,7 +91,6 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 								try {
 									s.logApply(r);
 								} catch(javax.xml.ws.WebServiceException e){
-									System.out.println("Master: Webservice exception, removing slave");
 									it.remove();
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -119,7 +118,7 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					truncate = false;
 					
 					// signal the slaves
-					LogRecord checkpointRecord = new LogRecord("", "checkpoint", null);
+					LogRecord checkpointRecord = new LogRecord("", "checkpoint", new Object[]{});
 					for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
 						KeyValueBaseSlaveImplService s = it.next();
 						try {

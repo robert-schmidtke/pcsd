@@ -104,7 +104,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			}
 			
 			// make all slaves recover
-			LogRecord recoverRecord = new LogRecord("", "recover", null);
+			LogRecord recoverRecord = new LogRecord("", "recover", new Object[]{});
 			for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
 				KeyValueBaseSlaveImplService s = it.next();
 				try {

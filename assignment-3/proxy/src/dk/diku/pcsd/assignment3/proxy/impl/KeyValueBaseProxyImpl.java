@@ -51,6 +51,8 @@ public class KeyValueBaseProxyImpl implements
 	private int currentReplica = 0;
 	private int replicas;
 	private TimestampLog lastLSN;
+	
+	private String replicaLock = "";
 
 	public KeyValueBaseProxyImpl() {
 		lastLSN = new TimestampLog(0L);
@@ -312,6 +314,7 @@ public class KeyValueBaseProxyImpl implements
 	}
 
 	private Replica getReplica() {
+		synchronized(replicaLock){
 		if (currentReplica >= slaves.size()) {
 			currentReplica = (currentReplica + 1) % replicas;
 			return new Replica(master);
@@ -319,6 +322,7 @@ public class KeyValueBaseProxyImpl implements
 			int index = currentReplica;
 			currentReplica = (currentReplica + 1) % replicas;
 			return new Replica(slaves.get(index));
+		}
 		}
 	}
 
@@ -343,7 +347,6 @@ public class KeyValueBaseProxyImpl implements
 	}
 
 	private void removeMaster() {
-		System.out.println("Proxy: removed master");
 		master = null;
 		replicas = slaves.size();
 	}
