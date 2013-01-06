@@ -1,5 +1,6 @@
 package test;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -86,13 +87,11 @@ public class MultiReadWriteTest {
 			ValueListImpl valueList = new ValueListImpl();
 			valueList.getValueList().add(value);
 			try {
-				if (!testMap.containsKey(keyValue)) {
+				
 					kvbis.insert(key, valueList);
 					testMap.put(keyValue, resultValue);
-				}
-
 			} catch (KeyAlreadyPresentException_Exception e) {
-				e.printStackTrace();
+				assertTrue(testMap.containsKey(keyValue));
 			} catch (IOException_Exception e) {
 				e.printStackTrace();
 			} catch (ServiceNotInitializedException_Exception e) {
@@ -148,12 +147,10 @@ public class MultiReadWriteTest {
 				ValueListImpl valueList = new ValueListImpl();
 				valueList.getValueList().add(value);
 				try {
-
 					kvbis.insert(key, valueList);
 					testMap.put(keyValue, resultValue);
-
 				} catch (KeyAlreadyPresentException_Exception e) {
-					// do nothing
+					assertTrue(testMap.containsKey(keyValue));
 				} catch (IOException_Exception e) {
 					e.printStackTrace();
 				} catch (ServiceNotInitializedException_Exception e) {

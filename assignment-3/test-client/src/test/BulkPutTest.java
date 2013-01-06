@@ -12,24 +12,26 @@ import java.util.Random;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import dk.diku.pcsd.assignment3.master.impl.FileNotFoundException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.IOException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.KeyAlreadyPresentException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.KeyImpl;
-import dk.diku.pcsd.assignment3.master.impl.KeyNotFoundException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplService;
-import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplServiceService;
-import dk.diku.pcsd.assignment3.master.impl.Pair;
-import dk.diku.pcsd.assignment3.master.impl.PairImpl;
-import dk.diku.pcsd.assignment3.master.impl.ServiceAlreadyInitializedException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.ServiceInitializingException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception;
-import dk.diku.pcsd.assignment3.master.impl.ValueImpl;
-import dk.diku.pcsd.assignment3.master.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.Configuration;
+import dk.diku.pcsd.assignment3.proxy.impl.FileNotFoundException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.IOException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyAlreadyPresentException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyNotFoundException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.Pair;
+import dk.diku.pcsd.assignment3.proxy.impl.PairImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.ServiceAlreadyConfiguredException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.ServiceAlreadyInitializedException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.ServiceInitializingException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.ServiceNotInitializedException_Exception;
+import dk.diku.pcsd.assignment3.proxy.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyValueBaseProxyImplService;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyValueBaseProxyImplServiceService;
 
 public class BulkPutTest {
-	static KeyValueBaseMasterImplServiceService kvbiss;
-	static KeyValueBaseMasterImplService kvbis;
+	static KeyValueBaseProxyImplServiceService kvbiss;
+	static KeyValueBaseProxyImplService kvbis;
 
 	static HashMap<String, String> testMap = new HashMap<String, String>();
 	HashMap<String, String> updated;
@@ -41,15 +43,24 @@ public class BulkPutTest {
 
 	@BeforeClass
 	public static void testSetup() {
-		kvbiss = new KeyValueBaseMasterImplServiceService();
-		kvbis = kvbiss.getKeyValueBaseMasterImplServicePort();
+		kvbiss = new KeyValueBaseProxyImplServiceService();
+		kvbis = kvbiss.getKeyValueBaseProxyImplServicePort();
+		
+		Configuration conf = new Configuration();
+		conf.setMaster("http://localhost:8080/master/keyvaluebasemaster?wsdl");
+		conf.getSlaves().add(
+				"http://localhost:8080/slave/keyvaluebaseslave?wsdl");
 		try {
+			kvbis.config(conf);
 			kvbis.init("");
 		} catch (FileNotFoundException_Exception e) {
 			e.printStackTrace();
 		} catch (ServiceAlreadyInitializedException_Exception e) {
 			e.printStackTrace();
 		} catch (ServiceInitializingException_Exception e) {
+			e.printStackTrace();
+		} catch (ServiceAlreadyConfiguredException_Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -96,14 +107,14 @@ public class BulkPutTest {
 			PairImpl p = new PairImpl();
 			KeyImpl k = new KeyImpl();
 			k.setKey(randomUpdateKey);
-			p.setKey(k);
+			p.setK(k);
 
 			ValueImpl v = new ValueImpl();
 			v.setValue(randomUpdateValue);
 			ValueListImpl vl = new ValueListImpl();
 			vl.getValueList().add(v);
 
-			p.setValue(vl);
+			p.setV(vl);
 
 			pairs.add(p);
 			updated.put(randomUpdateKey, randomUpdateValue);
@@ -153,7 +164,7 @@ public class BulkPutTest {
 							.get(rnd.nextInt(updatedKeys.size()));
 					k.setKey(key);
 
-					ValueListImpl value = (ValueListImpl)kvbis.read(k).getV();
+					ValueListImpl value = kvbis.read(k);
 					if (foundNewVal) {
 						assertEquals(updated.get(key), value.getValueList()
 								.get(0).getValue());

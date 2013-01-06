@@ -8,23 +8,31 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import dk.diku.pcsd.assignment3.master.impl.KeyImpl;
-import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplService;
-import dk.diku.pcsd.assignment3.master.impl.KeyValueBaseMasterImplServiceService;
-import dk.diku.pcsd.assignment3.master.impl.StringLengthPredicate;
-import dk.diku.pcsd.assignment3.master.impl.ValueImpl;
-import dk.diku.pcsd.assignment3.master.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.Configuration;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.StringLengthPredicate;
+import dk.diku.pcsd.assignment3.proxy.impl.ValueImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.ValueListImpl;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyValueBaseProxyImplService;
+import dk.diku.pcsd.assignment3.proxy.impl.KeyValueBaseProxyImplServiceService;
+import dk.diku.pcsd.assignment3.proxy.impl.Pair;
 
 public class ScanTest {
 	
 	// used for making all keys equally long
 	private static final int keyLength = 5;
 	
-	private static final KeyValueBaseMasterImplService kvbis = new KeyValueBaseMasterImplServiceService().getKeyValueBaseMasterImplServicePort();
+	private static final KeyValueBaseProxyImplService kvbis = new KeyValueBaseProxyImplServiceService().getKeyValueBaseProxyImplServicePort();
 	
 	@BeforeClass
 	public static void setup() {
+		
+		Configuration conf = new Configuration();
+		conf.setMaster("http://localhost:8080/master/keyvaluebasemaster?wsdl");
+		conf.getSlaves().add(
+				"http://localhost:8080/slave/keyvaluebaseslave?wsdl");
 		try {
+			kvbis.config(conf);
 			kvbis.init("");
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -53,7 +61,8 @@ public class ScanTest {
 			@Override
 			public void run() {
 				try {
-					scanResult.addAll(((List<ValueListImpl>) kvbis.scan(from, to, new StringLengthPredicate()).getV()));
+					
+					scanResult.addAll(kvbis.scan(from, to, new StringLengthPredicate()));
 				} catch (Exception e) {
 					throw new RuntimeException(e.getMessage(), e.getCause());
 				}
@@ -78,7 +87,7 @@ public class ScanTest {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		
-		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting less than " + numKeys, scanResult.size() < numKeys);
+		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting less than " + numKeys, scanResult.size() > 0 && scanResult.size() < numKeys);
 	}
 	
 	@Test
@@ -103,7 +112,7 @@ public class ScanTest {
 			@Override
 			public void run() {
 				try {
-					scanResult.addAll(((List<ValueListImpl>) kvbis.scan(from, to, new StringLengthPredicate()).getV()));
+					scanResult.addAll(kvbis.scan(from, to, new StringLengthPredicate()));
 				} catch (Exception e) {
 					throw new RuntimeException(e.getMessage(), e.getCause());
 				}
@@ -127,7 +136,7 @@ public class ScanTest {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		
-		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting less than " + numKeys, scanResult.size() < numKeys);
+		Assert.assertTrue("Invalid size of result set: " + scanResult.size() + ", expecting less than " + numKeys, scanResult.size() > 0 && scanResult.size() < numKeys);
 	}
 	
 	@Test
@@ -151,7 +160,7 @@ public class ScanTest {
 			@Override
 			public void run() {
 				try {
-					scanResult.addAll(((List<ValueListImpl>) kvbis.scan(from, to, new StringLengthPredicate()).getV()));
+					scanResult.addAll(kvbis.scan(from, to, new StringLengthPredicate()));
 				} catch (Exception e) {
 					throw new RuntimeException(e.getMessage(), e.getCause());
 				}
@@ -207,7 +216,7 @@ public class ScanTest {
 			@Override
 			public void run() {
 				try {
-					scanResult.addAll(((List<ValueListImpl>) kvbis.scan(from, to, new StringLengthPredicate()).getV()));
+					scanResult.addAll(kvbis.scan(from, to, new StringLengthPredicate()));
 				} catch (Exception e) {
 					throw new RuntimeException(e.getMessage(), e.getCause());
 				}
