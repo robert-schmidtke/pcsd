@@ -45,13 +45,16 @@ import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
 public class KeyValueBaseProxyImpl implements
 		KeyValueBaseProxy<KeyImpl, ValueListImpl> {
+	private final String replicaError = "Proxy has no working replicas. Either it has not been initialized or all replicas are unreachable.";
+	private final String masterError = "Proxy has no working master. Either it has not been initialized or the master is unreachable.";
+
 	private KeyValueBaseMasterImplService master;
 	private List<KeyValueBaseSlaveImplService> slaves;
 
 	private int currentReplica = 0;
-	private int replicas;
+	private int replicas = 0;
 	private TimestampLog lastLSN;
-	
+
 	private String replicaLock = "";
 
 	public KeyValueBaseProxyImpl() {
@@ -74,6 +77,8 @@ public class KeyValueBaseProxyImpl implements
 			} catch (ServiceInitializingException_Exception e) {
 				throw new ServiceInitializingException(e.getMessage());
 			}
+		} else {
+			throw new RuntimeException(masterError);
 		}
 	}
 
@@ -105,8 +110,9 @@ public class KeyValueBaseProxyImpl implements
 				throw new ServiceNotInitializedException(e.getMessage());
 			}
 			return result;
+		} else {
+			throw new RuntimeException(replicaError);
 		}
-		return null;
 	}
 
 	@Override
@@ -125,6 +131,8 @@ public class KeyValueBaseProxyImpl implements
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
 				throw new ServiceNotInitializedException(e.getMessage());
 			}
+		} else {
+			throw new RuntimeException(masterError);
 		}
 	}
 
@@ -144,6 +152,8 @@ public class KeyValueBaseProxyImpl implements
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
 				throw new ServiceNotInitializedException(e.getMessage());
 			}
+		} else {
+			throw new RuntimeException(masterError);
 		}
 	}
 
@@ -160,6 +170,8 @@ public class KeyValueBaseProxyImpl implements
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
 				throw new ServiceNotInitializedException(e.getMessage());
 			}
+		} else {
+			throw new RuntimeException(masterError);
 		}
 	}
 
@@ -193,8 +205,9 @@ public class KeyValueBaseProxyImpl implements
 						null);
 			}
 			return result;
+		} else {
+			throw new RuntimeException(replicaError);
 		}
-		return null;
 	}
 
 	@Override
@@ -227,8 +240,9 @@ public class KeyValueBaseProxyImpl implements
 						null);
 			}
 			return result;
+		} else {
+			throw new RuntimeException(replicaError);
 		}
-		return null;
 	}
 
 	@Override
@@ -245,6 +259,8 @@ public class KeyValueBaseProxyImpl implements
 			} catch (dk.diku.pcsd.assignment3.master.impl.ServiceNotInitializedException_Exception e) {
 				throw new ServiceNotInitializedException(e.getMessage());
 			}
+		} else {
+			throw new RuntimeException(masterError);
 		}
 	}
 
@@ -314,15 +330,15 @@ public class KeyValueBaseProxyImpl implements
 	}
 
 	private Replica getReplica() {
-		synchronized(replicaLock){
-		if (currentReplica >= slaves.size()) {
-			currentReplica = (currentReplica + 1) % replicas;
-			return new Replica(master);
-		} else {
-			int index = currentReplica;
-			currentReplica = (currentReplica + 1) % replicas;
-			return new Replica(slaves.get(index));
-		}
+		synchronized (replicaLock) {
+			if (currentReplica >= slaves.size()) {
+				currentReplica = (currentReplica + 1) % replicas;
+				return new Replica(master);
+			} else {
+				int index = currentReplica;
+				currentReplica = (currentReplica + 1) % replicas;
+				return new Replica(slaves.get(index));
+			}
 		}
 	}
 
@@ -335,11 +351,11 @@ public class KeyValueBaseProxyImpl implements
 
 	private void removeSlave(KeyValueBaseSlaveImplService slave) {
 		int toDelete = -1;
-		for (int i = 0; i<slaves.size(); i++){
-			if (slaves.get(i)==slave){
+		for (int i = 0; i < slaves.size(); i++) {
+			if (slaves.get(i) == slave) {
 				toDelete = i;
 				break;
-			}			
+			}
 		}
 		if (toDelete != -1)
 			slaves.remove(toDelete);
