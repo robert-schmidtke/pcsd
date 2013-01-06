@@ -163,8 +163,12 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				quiesceLock.readLock().unlock();
 				throw new ServiceNotInitializedException();
 			}
+			try{
 			if (logging)
 				log("insert", k, v);
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 			index.insert(k, v);
 		} finally {
 			quiesceLock.readLock().unlock();
