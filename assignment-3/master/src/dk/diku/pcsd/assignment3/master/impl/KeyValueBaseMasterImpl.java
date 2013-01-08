@@ -36,14 +36,21 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
+/**
+ * Implements the functionality of a master. Pretty much identical to the
+ * earlier service, but uses a Replicator instead of a logger to forward writes
+ * to the slaves.
+ * 
+ * Only directly offers write methods, as read functionality is inherited from
+ * KeyValueBaseReplica.
+ * 
+ */
 public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 		KeyValueBaseMaster<KeyImpl, ValueListImpl>,
 		KeyValueBaseLog<KeyImpl, ValueListImpl> {
 
 	private ReadWriteLock quiesceLock;
 	
-	// FIXME stop those threads!
-
 	private CheckpointerImpl checkpointer;
 	private Thread checkpointerThread;
 
@@ -60,7 +67,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 	}
 
 	private KeyValueBaseMasterImpl(IndexImpl index, ReplicatorImpl replicator,
-			CheckpointerImpl checkpointer) {		
+			CheckpointerImpl checkpointer) {
 		quiesceLock = new ReentrantReadWriteLock(true);
 		this.replicator = replicator;
 		this.checkpointer = checkpointer;
@@ -76,7 +83,7 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			// because the log is only created after config
 			boolean wasConfigured = !(records.size() > 0 && records.get(0)
 					.getMethodName().equals("config"));
-			
+
 			// same for initialized
 			initialized = !(records.size() > 1 && records.get(1)
 					.getMethodName().equals("init"));
@@ -85,7 +92,8 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			recovering = true;
 			for (LogRecord record : records) {
 				try {
-					if(record.getMethodName().equals("init") || record.getMethodName().equals("config"))
+					if (record.getMethodName().equals("init")
+							|| record.getMethodName().equals("config"))
 						record.invoke(this);
 					else
 						record.invoke(IndexImpl.getInstance());
@@ -102,14 +110,16 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				checkpointerThread = new Thread(this.checkpointer);
 				checkpointerThread.start();
 			}
-			
+
 			// make all slaves recover
-			LogRecord recoverRecord = new LogRecord("", "recover", new Object[]{});
-			for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+			LogRecord recoverRecord = new LogRecord("", "recover",
+					new Object[] {});
+			for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it
+					.hasNext();) {
 				KeyValueBaseSlaveImplService s = it.next();
 				try {
 					s.logApply(recoverRecord);
-				} catch(javax.xml.ws.WebServiceException e){
+				} catch (javax.xml.ws.WebServiceException e) {
 					it.remove();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -163,10 +173,10 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 				quiesceLock.readLock().unlock();
 				throw new ServiceNotInitializedException();
 			}
-			try{
-			if (logging)
-				log("insert", k, v);
-			}catch(Exception e){
+			try {
+				if (logging)
+					log("insert", k, v);
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			index.insert(k, v);
@@ -269,12 +279,12 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 		try {
 			if (methodName.equals("init")) {
 				replicator.makeStable(
-						new LogRecord(KeyValueBaseReplica.class,
-								methodName, params)).get();
-			} else if(methodName.equals("config")) {
+						new LogRecord(KeyValueBaseReplica.class, methodName,
+								params)).get();
+			} else if (methodName.equals("config")) {
 				replicator.makeStable(
-						new LogRecord(KeyValueBaseMaster.class,
-								methodName, params)).get();
+						new LogRecord(KeyValueBaseMaster.class, methodName,
+								params)).get();
 			} else {
 				replicator.makeStable(
 						new LogRecord(IndexImpl.class, methodName, params))
@@ -293,15 +303,15 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 			quiesceLock.readLock().unlock();
 			throw new ServiceAlreadyConfiguredException();
 		}
-		
+
 		if (logging || recovering) {
 			replicatorThread = new Thread(replicator);
 			replicatorThread.start();
 		}
 		checkpointerThread = new Thread(checkpointer);
 		checkpointerThread.start();
-		
-		if(logging)
+
+		if (logging)
 			log("config", conf);
 
 		slaves = new ArrayList<KeyValueBaseSlaveImplService>();
@@ -317,12 +327,14 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 						"KeyValueBaseSlaveImplServiceService");
 				KeyValueBaseSlaveImplServiceService service = new KeyValueBaseSlaveImplServiceService(
 						url, qn);
-				KeyValueBaseSlaveImplService newSlave = service.getKeyValueBaseSlaveImplServicePort();
-				
-				Map<String, Object> requestContext = ((BindingProvider)newSlave).getRequestContext();
-				requestContext.put("com.sun.xml.ws.connect.timeout", 15000); 
-				requestContext.put("com.sun.xml.ws.request.timeout", 15000); 
-				
+				KeyValueBaseSlaveImplService newSlave = service
+						.getKeyValueBaseSlaveImplServicePort();
+
+				Map<String, Object> requestContext = ((BindingProvider) newSlave)
+						.getRequestContext();
+				requestContext.put("com.sun.xml.ws.connect.timeout", 15000);
+				requestContext.put("com.sun.xml.ws.request.timeout", 15000);
+
 				slaves.add(newSlave);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
@@ -331,6 +343,15 @@ public class KeyValueBaseMasterImpl extends KeyValueBaseReplicaImpl implements
 
 		replicator.setSlaves(slaves, conf);
 		quiesceLock.readLock().unlock();
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		if (checkpointerThread!=null && checkpointerThread.isAlive())
+			checkpointerThread.interrupt();
+		if (replicatorThread!=null && replicatorThread.isAlive())
+			replicatorThread.interrupt();
+		super.finalize();
 	}
 
 }

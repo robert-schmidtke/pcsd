@@ -1,6 +1,5 @@
 package dk.diku.pcsd.assignment3.proxy.impl;
 
-import javax.jws.WebParam;
 import javax.xml.ws.WebServiceException;
 
 import dk.diku.pcsd.assignment3.impl.KeyImpl;
@@ -13,6 +12,12 @@ import dk.diku.pcsd.assignment3.slave.impl.ServiceNotInitializedException_Except
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 
+/**
+ * Wrapper for a master or slave service, because the generated classes do not
+ * implement a common interface. Contains either a master or a slave, offers the
+ * same methods as a Replica, throws the Slave's generated exceptions
+ * (translates master's exceptions into those).
+ */
 public class Replica {
 	private KeyValueBaseSlaveImplService slave;
 	private KeyValueBaseMasterImplService master;
@@ -67,11 +72,11 @@ public class Replica {
 			return slave.scan(from, to, pred);
 		}
 	}
-	
-	public Object getReplica(){
+
+	public Object getReplica() {
 		if (hasMaster)
 			return master;
-		else 
+		else
 			return slave;
 	}
 

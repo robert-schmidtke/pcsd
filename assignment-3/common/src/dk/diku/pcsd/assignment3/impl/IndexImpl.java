@@ -47,8 +47,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 	public Map<KeyImpl, SpaceIdent> getMappings() {
 		return mappings;
 	}
-	
-	public void init(long fileLength, SortedSet<SpaceIdent> emptyList, Map<KeyImpl, SpaceIdent> mappings) {
+
+	public void init(long fileLength, SortedSet<SpaceIdent> emptyList,
+			Map<KeyImpl, SpaceIdent> mappings) {
 		this.fileLength = fileLength;
 		this.emptyList = emptyList;
 		this.mappings = mappings;
@@ -110,8 +111,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 			if (result != null) {
 				emptyList.remove(result);
 				int ldiff = result.getLength() - length;
-				if (ldiff > 0){
-					SpaceIdent empty = new SpaceIdent(result.getPos()+length, ldiff);
+				if (ldiff > 0) {
+					SpaceIdent empty = new SpaceIdent(result.getPos() + length,
+							ldiff);
 					result.setLength(length);
 					freeSpace(empty);
 				}
@@ -167,7 +169,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 			SpaceIdent space = findFreeSpace(toWrite.length);
 
 			store.write(space.getPos(), toWrite);
-
 
 			mappingsLock.writeLock().lock();
 			try {
@@ -345,8 +346,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 
 		List<ValueListImpl> result = new ArrayList<ValueListImpl>();
 
-		// TODO: it may be more efficient to sort the list first
-		// and only check for one property in each iteration
 		for (Iterator<KeyImpl> i = keys.iterator(); i.hasNext();) {
 			KeyImpl current = i.next();
 			if (begin.compareTo(current) <= 0 && end.compareTo(current) >= 0) {
@@ -398,13 +397,6 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 		}
 	}
 
-	/*
-	 * TODO: writeLock throughout is probably not necessary, but just a readLock
-	 * throughout causes a deadlock and i think we need some kind of lock
-	 * throughout. yes we do. (non-Javadoc)
-	 * 
-	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
-	 */
 	public void bulkPut(List<Pair<KeyImpl, ValueListImpl>> newPairs)
 			throws IOException {
 
@@ -416,12 +408,12 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 		}
 		try {
 			for (Pair<KeyImpl, ValueListImpl> p : newPairs) {
-				try{
+				try {
 					boolean containsKey = mappings.containsKey(p.getKey());
 
-					if (containsKey) 
+					if (containsKey)
 						update(p.getKey(), p.getValue());
-					else 
+					else
 						insert(p.getKey(), p.getValue());
 				} catch (Exception e) {
 					e.printStackTrace();

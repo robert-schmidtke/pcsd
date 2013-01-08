@@ -38,11 +38,18 @@ import dk.diku.pcsd.keyvaluebase.exceptions.ServiceInitializingException;
 import dk.diku.pcsd.keyvaluebase.exceptions.ServiceNotInitializedException;
 import dk.diku.pcsd.keyvaluebase.interfaces.Configuration;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseProxy;
-import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseReplica;
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
+/**
+ * Forwards incoming requests to either the master or a slave. Write requests
+ * are always forwarded to the master, read requests are forwarded either to a
+ * slave or the master.
+ * 
+ * Uses a round robin schedule to select the replica for a read request.
+ * 
+ */
 public class KeyValueBaseProxyImpl implements
 		KeyValueBaseProxy<KeyImpl, ValueListImpl> {
 	private final String replicaError = "Proxy has no working replicas. Either it has not been initialized or all replicas are unreachable.";
@@ -52,6 +59,8 @@ public class KeyValueBaseProxyImpl implements
 	private List<KeyValueBaseSlaveImplService> slaves;
 
 	private int currentReplica = 0;
+
+	// slaves.size() + 1 if the master is available, otherwise + 0
 	private int replicas = 0;
 	private TimestampLog lastLSN;
 
@@ -329,6 +338,10 @@ public class KeyValueBaseProxyImpl implements
 
 	}
 
+	/**
+	 * Returns either a slave or the master wrapped in a Replica object. A round
+	 * robin schedule is used for selecting which replica is wrapped and used.
+	 */
 	private Replica getReplica() {
 		synchronized (replicaLock) {
 			if (currentReplica >= slaves.size()) {
