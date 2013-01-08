@@ -20,16 +20,22 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 import dk.diku.pcsd.keyvaluebase.interfaces.TimestampLog;
 
-public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, ValueListImpl> {
-	
+/**
+ * Offers methods for reading from the database, i.e. the functionality offered
+ * by both master and slaves. Is therefore extended by both master and slaves,
+ * and never used directly.
+ */
+public abstract class KeyValueBaseReplicaImpl implements
+		KeyValueBaseReplica<KeyImpl, ValueListImpl> {
+
 	protected IndexImpl index;
-	
+
 	protected boolean initialized = false, initializing = false;
-	
-	protected KeyValueBaseReplicaImpl(){
-		index=IndexImpl.getInstance();
+
+	protected KeyValueBaseReplicaImpl() {
+		index = IndexImpl.getInstance();
 	}
-	
+
 	@Override
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
@@ -73,8 +79,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 					if (!key.equals(currentKey)) {
 
 						if (currentKey != null) {
-							index.insert(new KeyImpl(currentKey),
-									currentValues);
+							index.insert(new KeyImpl(currentKey), currentValues);
 						}
 
 						currentKey = key;
@@ -111,7 +116,7 @@ public class KeyValueBaseReplicaImpl implements KeyValueBaseReplica<KeyImpl, Val
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override

@@ -16,9 +16,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Replicator;
 
 /**
- * This class extends your MyLogger from assignment 2 to use its logic, and it
- * is a suggestion. You can choose to follow it or lint to your last
- * assignment's implementation in your own way.
+ * Extends the Logger. After logging a request, also forwards it to the slaves
+ * before releasing the Future.
  */
 
 public class ReplicatorImpl extends LoggerImpl implements Replicator {
@@ -35,7 +34,6 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 	}
 
 	private ReplicatorImpl() {
-		// FIXME well this probably needs to be changed
 		super();
 	}
 
@@ -57,40 +55,42 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 			try {
 				// wait for log request to appear
 				next = logQueue.poll(10L, TimeUnit.SECONDS);
-			
-				if(next != null)
+
+				if (next != null)
 					signalQueue.add(next);
-				
+
 				// if we have reached a certain amount of requests
 				// or some time has passed
 				// then write the log records
-				if (signalQueue.size() >= K ||
-						(signalQueue.size() > 0 && System.currentTimeMillis() - lastRun >= TIMEOUT)) {
-					
-					for(LogQueueEntry<Date> entry : signalQueue) {
+				if (signalQueue.size() >= K
+						|| (signalQueue.size() > 0 && System
+								.currentTimeMillis() - lastRun >= TIMEOUT)) {
+
+					for (LogQueueEntry<Date> entry : signalQueue) {
 						try {
 							out.writeObject(entry.record);
 						} catch (IOException e) {
 							throw new RuntimeException(e.getMessage(), e);
 						}
 					}
-	
+
 					try {
 						out.flush();
 					} catch (IOException e) {
 						throw new RuntimeException(e.getMessage(), e);
 					}
-	
+
 					while (signalQueue.size() > 0) {
 						LogRecord r = signalQueue.peek().record;
 						// do not replicate configure log requests
-						if(!r.getMethodName().equals("config")) {
-							
-							for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+						if (!r.getMethodName().equals("config")) {
+
+							for (Iterator<KeyValueBaseSlaveImplService> it = slaves
+									.iterator(); it.hasNext();) {
 								KeyValueBaseSlaveImplService s = it.next();
 								try {
 									s.logApply(r);
-								} catch(javax.xml.ws.WebServiceException e){
+								} catch (javax.xml.ws.WebServiceException e) {
 									it.remove();
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -99,10 +99,10 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 						}
 						signalQueue.poll().future.signalAll(new Date());
 					}
-	
+
 					lastRun = System.currentTimeMillis();
 				}
-	
+
 				// done by the checkpointer
 				if (truncate) {
 					try {
@@ -111,19 +111,21 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 					} catch (IOException e) {
 						throw new RuntimeException(e.getMessage(), e);
 					}
-	
+
 					logFile.delete();
 					initOutputStream();
 					logSlaves();
 					truncate = false;
-					
+
 					// signal the slaves
-					LogRecord checkpointRecord = new LogRecord("", "checkpoint", new Object[]{});
-					for (Iterator<KeyValueBaseSlaveImplService> it = slaves.iterator(); it.hasNext(); ) {
+					LogRecord checkpointRecord = new LogRecord("",
+							"checkpoint", new Object[] {});
+					for (Iterator<KeyValueBaseSlaveImplService> it = slaves
+							.iterator(); it.hasNext();) {
 						KeyValueBaseSlaveImplService s = it.next();
 						try {
 							s.logApply(checkpointRecord);
-						} catch(javax.xml.ws.WebServiceException e){
+						} catch (javax.xml.ws.WebServiceException e) {
 							it.remove();
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -144,14 +146,16 @@ public class ReplicatorImpl extends LoggerImpl implements Replicator {
 		}
 	}
 
-	public void setSlaves(List<KeyValueBaseSlaveImplService> s, Configuration conf) {
+	public void setSlaves(List<KeyValueBaseSlaveImplService> s,
+			Configuration conf) {
 		this.slaves = s;
 		this.conf = conf;
 	}
-	
+
 	private void logSlaves() {
-		LogRecord slavesRecord = new LogRecord(KeyValueBaseMaster.class, "config", new Object[] { conf });
+		LogRecord slavesRecord = new LogRecord(KeyValueBaseMaster.class,
+				"config", new Object[] { conf });
 		makeStable(slavesRecord);
 	}
-	
+
 }
