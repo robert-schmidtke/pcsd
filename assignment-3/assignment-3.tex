@@ -51,7 +51,7 @@
 
 \subsubsection*{(a)}
 
-If only asynchronous communication primitives are available, then the synchronisation must be implemented yourself. This can e.g. be done by sending the message, and only continuing until a reply of the receiver of the message was received (an acknowledgement). This could even be taken further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
+If only asynchronous communication primitives are available, then the synchronisation must be implemented manually. This can be done by sending the message, and only continuing until a reply from the receiver of the message was received (an acknowledgement). This could even be taken further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
 
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
 Sender(){
@@ -87,14 +87,14 @@ Receiver(){
 
 \subsubsection*{(b)}
 
-If you have only synchronous primitives available, but want to implement asynchronous communication (between sender and receiver), then this can be reached by having one (or more) proxies in between. Then the sender and receiver could communicate synchronously with their adjacent proxy, but between the sender and receiver there is an asynchronous communication. An example in pseudo-code is below, where the proxy is implemented through the function MessageBuffer():
+If you have only synchronous primitives available, but want to implement asynchronous communication (between sender and receiver), then this can be achieved by having one (or more) proxies in between. Then the sender and receiver could communicate synchronously with their adjacent proxy, but between the sender and receiver there is an asynchronous communication. An example in pseudo-code is below, where the proxy is implemented through the function MessageBuffer():
 
 \begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
 Sender(){
 	//DO SOMETHING
 	MessageBuffer mb = new MessageBuffer();
-	Acknowledgement ack = mb.sendMessage(Message msg);
-	ack.wait();
+	Acknowledgement receiveAck = mb.sendMessage(Message msg);
+	receiveAck.wait();
 	//CONTINUE DOING SOMETHING
 }
 
@@ -107,10 +107,10 @@ MessageBuffer(){
 		if (msg.isFullyReceived()){
 			receiveAck.notify();
 		}
-		
-		Acknowledgement sendAck = sr.sendMessage(Message msg);
-		sendAck.wait();
 	}
+	
+	Acknowledgement sendAck = sr.sendMessage(Message msg);
+	sendAck.wait();
 }
 
 Receiver(){
@@ -118,7 +118,7 @@ Receiver(){
 	while(True){
 		Message msg = mb.receiveMessage();
 		if (msg.isFullyReceived())
-			ack.notify();
+			sendAck.notify();
 		}
 	}
 }
@@ -140,11 +140,11 @@ MessageServer(){
 \label{sec:eq2}
 \subsubsection*{Exokernel}
 
-Typically Operation Systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. The end-to-end principle asks for high control over application specific decisions at the application level. By limiting applications, it is in a sense application specific, and thus violates the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). Exokernels therefore attempt to closer adhere to the end-to-end principle, as they allow applications for more access to the hardware, and hence making it less application specific. For such a design speaks that it on the one hand side gives the application more freedom and and more functionality, and one the other hand allows for improved performance (\cite{Engler1995} speak of possible performance improvements up to 45\%). Against this design speaks that by being more application specific, such a design is also more specific to a certain physical platform, as hardware abstraction layers are diminished. Also does more freedom mean more responsibilities for the application, which if certain things are not or badly handled do not lead to expected improvements.
+Typical operating systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. The end-to-end principle asks for high control over application specific decisions at the application level. By forcing constraints upon applications via the abstraction layers regular kernels (e.g. monolithic ones) violate the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). Exokernels therefore attempt to closer adhere to the end-to-end principle, as they allow applications more direct access to the hardware, thus forcing less abstraction upon the application. This design gives the application more freedom and and possibly more functionality, and it allows for improved performance (\cite{Engler1995} speaks of possible performance improvements up to 45\%). The downside is that by being less restrictive, applications for such a design are also more specific to a certain physical platform, as hardware abstraction layers are abandoned. More freedom for the applications also means more responsibilities, which, if certain things are not or badly handled do not lead to expected improvements.
 
 \subsubsection*{Encrypted data transmission}
 
-Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principles by that it does not care about application specific details (e.g. if it transmits an e-mail, web pages, files or voice-over-IP), but does only provide with the secure transmission for the application. Alternatively the necessary steps such as key exchange, entity and message authentication, and en- and decryption could be implemented at an application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives no opportunity to possible intruders, as the application gives the \emph{plain} data into this lower "channel" (see \cite{Saltzer1984}).
+Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principle in that application specific details are irrelevant (e.g. if an e-mail, web pages, files or voice-over-IP is transmitted), but does only provide the secure transmission for the application. Alternatively, the necessary steps such as key exchange, entity and message authentication, as well as encryption and decryption could be implemented at the application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives no opportunity to possible intruders, as the application gives the \emph{plain} data into underlying lower layer (see \cite{Saltzer1984}).
 
 \subsection*{Question 3}
 \label{sec:eq3}
@@ -176,9 +176,9 @@ We hence choose the fully connected network.
 \subsection*{Question 4}
 \label{sec:eq4}
 
-The two-phase commit protocol (2PC) is a blocking protocol, by that it blocks each node until a commit or roll-back is received. If for instance the coordinator fails after a participant sent an agreement, the participant will block (and with that keep any objects such as tables locked) until the coordinator is recovered and resumes the operation. Also if the coordinator waits for another participant to return an okay, but this participant fails, the coordinator would wait and all other participants would be left blocking (but this case could be resolved by implementing a time-out in the coordinator after that the coordinator sends an abort to the remaining participants). 
+The two-phase commit protocol (2PC) is a blocking protocol, because it blocks each node until a commit or roll-back is received. If for instance the coordinator fails after a participant sent an agreement, the participant will block (and with that keep any objects such as tables locked) until the coordinator is recovered and resumes the operation. Also if the coordinator waits for another participant to return an okay, but this participant fails, the coordinator would wait and all other participants would be left blocking (but this case could be resolved by implementing a time-out in the coordinator after that the coordinator sends an abort to the remaining participants). 
 
-The three-phase commit protocol (3PC) prevents delay due to blocking by introducing the extra step of sending the \emph{preCommit}. If the coordinator fails before sending the \emph{preCommit} (the participant is in the "uncertain" period), the participant will assume an abort after some time-out, will roll-back and can release all locks and continue with other transactions. In the 2PC that was not possible, as it could be the case that the coordinator already send a \emph{doCommit} to some participants, and then failed. If then the other participants implemented a time-out and aborted, the system were not in a consistent state, as some nodes committed the transaction and others aborted it.
+The three-phase commit protocol (3PC) prevents delay due to blocking by introducing the extra step of sending the \emph{preCommit}. If the coordinator fails before sending the \emph{preCommit} (the participant is in the "uncertain" period), the participant will assume an abort after some time-out, will roll-back and can release all locks and continue with other transactions. In the 2PC that was not possible, as it could be the case that the coordinator already send a \emph{doCommit} to some participants, and then failed. If then the other participants implemented a time-out and aborted, the system would not be in a consistent state, as some nodes committed the transaction and others aborted it.
 
 \section*{Programming Task} 
 \label{sec:programming}
@@ -186,7 +186,7 @@ The three-phase commit protocol (3PC) prevents delay due to blocking by introduc
 \subsection*{Concerning our implementation}
 In order for recovery to work, slaves must be run on a different application server than the master, and the slave server has to be restarted \emph{before} the master server. For all other purposes, master, slave and proxy can also be run on the same server. Checkpoints and logs are stored in the directory stored in \texttt{java.io.tmpdir}. File names are constructed from the Tomcat's directory and the name of the application's war file, which is why moving or renaming either of those will prevent recovery from working.
 
-Because of some JAX-WS issues that we don't remember any more (hey, it was last year), we had to resort to an older version of the JAX-WS libraries, which definitely works with the OpenJDK 6, but hopefully also with other Java versions. 
+Because of some JAX-WS issues that we had earlier concerning running wsimport'ed code on a server that itself hat JAX-WS libraries, we had to resort to an older version of the JAX-WS libraries, which definitely works with the OpenJDK 6, but hopefully also with other Java versions. 
 
 Initialization files are searched in the \texttt{java.io.tmpdir} directory, meaning that the path to an initialization file has to be a relative path from said directory.
 
@@ -218,7 +218,7 @@ For the sake of the question, we will assume that configurations are \emph{not} 
 We devised a procedure that would keep read access to the store available at all times, but would prevent write access for a short time. 
 \begin{enumerate}
   \item Set up and start the proxy or proxies on the new servers using the new configuration.
-  \item After a checkpoint has been made, start copying checkpoint data for both master and slaves to the new servers.
+  \item After a checkpoint has been made, start copying checkpoint data for both master and slaves to the new servers (i.e. serialized and flushed Index and Store).
   \item As soon as the copying is done, start the new the slaves.
   \item At some point, but before the next checkpoint is made, shut down the master. From now on, clients have only read access from the old proxies. \label{writestop}
   \item Copy the old master's log to the new master server.
