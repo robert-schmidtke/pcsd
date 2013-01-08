@@ -213,8 +213,21 @@ In case a request to one of the slaves times out, this slave is simply removed f
 
 \subsection*{Question 4}
 \label{sec:pq4}
-TODO
+For the sake of the question, we will assume that configurations are \emph{not} logged and restored, although the opposite is the case in our implementation. Instead, we assume that the configuration is fed to the proxies and the master in some way before startup, e.g. by placing the necessary information in a config file, which is then read by the server. We also assume that the time between two checkpoints is not a matter of minutes or seconds, but is actually long enough to do stuff inbetween.
 
+We devised a procedure that would keep read access to the store available at all times, but would prevent write access for a short time. 
+\begin{enumerate}
+  \item Set up and start the proxy or proxies on the new servers using the new configuration.
+  \item After a checkpoint has been made, start copying checkpoint data for both master and slaves to the new servers.
+  \item As soon as the copying is done, start the new the slaves.
+  \item At some point, but before the next checkpoint is made, shut down the master. From now on, clients have only read access from the old proxies. \label{writestop}
+  \item Copy the old master's log to the new master server.
+  \item Start the new master with the new configuration, which should now begin the recovery process. \label{writestart}
+  \item Once the recovery process is done, create a redirect from the old proxies' URLs to the new ones. Clients can now use the full functionality of the service again. 
+  \item Shut down all remaining slaves and proxies on the old servers, they are no longer needed.
+\end{enumerate}
+
+There would only be read access between steps \ref{writestop} and \ref{writestart}, inclusive. We did not find a way to avoid this, since at some point the current state of the store needs to be frozen and copied. Copying only the log, instead of the entire memory mapped file, should shorten the time needed for this considerably.
 
 \begin{thebibliography}{1}
 
